@@ -1,3 +1,11 @@
+#ifndef IOBENCH_POSIX_H
+#define IOBENCH_POSIX_H
+
+#include "iobench.h"
+
+class PosixIoBench : public IoBench {
+ public:
+};
 
 void posix_io(const std::string& filename, size_t transfer_size,
               size_t block_size, IOType io_type, IOPattern io_pattern) {
@@ -15,9 +23,6 @@ void posix_io(const std::string& filename, size_t transfer_size,
   }
 
   std::vector<char> buffer(transfer_size);
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<size_t> distrib(0, block_size - transfer_size);
 
   size_t num_transfers = block_size / transfer_size;
   for (size_t i = 0; i < num_transfers; ++i) {

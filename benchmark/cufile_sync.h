@@ -1,3 +1,14 @@
+#ifndef CUFILE_SYNC_H
+#define CUFILE_SYNC_H
+
+#include <cuda_runtime.h>
+
+#include "iobench.h"
+
+class CufileSyncIoBench : public IoBench {
+ public:
+};
+
 void cufile_io(const std::string& filename, size_t transfer_size,
                size_t block_size, IOType io_type, IOPattern io_pattern) {
   CUfileError_t status = cuFileDriverOpen();
@@ -32,7 +43,8 @@ void cufile_io(const std::string& filename, size_t transfer_size,
 
   size_t num_transfers = block_size / transfer_size;
   for (size_t i = 0; i < num_transfers; ++i) {
-    size_t offset = i * transfer_size;
+    size_t offset =
+        (io_pattern == IOPattern::RANDOM) ? distrib(gen) : i * transfer_size;
     ssize_t ret = cuFileWrite(fh, device_buffer, transfer_size, offset, 0);
     if (ret < 0) {
       std::cerr << "cuFileWrite error: " << ret << std::endl;
@@ -42,3 +54,5 @@ void cufile_io(const std::string& filename, size_t transfer_size,
   cudaFree(device_buffer);
   cuFileHandleDeregister(fh);
 }
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef IOBENCH_H
+#define IOBENCH_H
+
 #include <mpi.h>
 
 enum class IOPattern { SEQUENTIAL, RANDOM };
@@ -76,3 +79,5 @@ class IoBench {
     Close();
   }
 };
+
+#endif
