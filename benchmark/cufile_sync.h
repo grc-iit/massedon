@@ -5,12 +5,14 @@
 
 #include "iobench.h"
 
-class CufileSyncIoBench : public IoBench {
- public:
-};
+namespace mass {
+
+// class CufileSyncIoEngine : public IoEngine {
+//  public:
+// };
 
 void cufile_io(const std::string& filename, size_t transfer_size,
-               size_t block_size, IOType io_type, IOPattern io_pattern) {
+               size_t block_size, IOType io_type, IoPattern io_pattern) {
   CUfileError_t status = cuFileDriverOpen();
   if (status.err != CU_FILE_SUCCESS) {
     return;
@@ -44,7 +46,7 @@ void cufile_io(const std::string& filename, size_t transfer_size,
   size_t num_transfers = block_size / transfer_size;
   for (size_t i = 0; i < num_transfers; ++i) {
     size_t offset =
-        (io_pattern == IOPattern::RANDOM) ? distrib(gen) : i * transfer_size;
+        (io_pattern == IoPattern::kRandom) ? distrib(gen) : i * transfer_size;
     ssize_t ret = cuFileWrite(fh, device_buffer, transfer_size, offset, 0);
     if (ret < 0) {
       std::cerr << "cuFileWrite error: " << ret << std::endl;
@@ -54,5 +56,7 @@ void cufile_io(const std::string& filename, size_t transfer_size,
   cudaFree(device_buffer);
   cuFileHandleDeregister(fh);
 }
+
+}  // namespace mass
 
 #endif

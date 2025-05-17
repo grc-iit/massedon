@@ -9,42 +9,26 @@
         {
             "name": "debug",
             "hidden": false,
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_INSTALL_PREFIX": "/home/llogan/.scspkg/packages/massedon",
-                "CHIMAERA_ENABLE_CUDA": "OFF",
-                "MASSEDON_ENABLE_CMAKE_DOTENV": "ON"
-            }
-        },
-        {
-            "name": "cuda-debug",
-            "hidden": false,
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_INSTALL_PREFIX": "/home/llogan/.scspkg/packages/massedon",
-                "CHIMAERA_ENABLE_CUDA": "ON",
-                "CHIMAERA_ENABLE_ROCM": "OFF",
                 "BUILD_TESTS": "OFF",
                 "MASSEDON_ENABLE_CMAKE_DOTENV": "ON"
             }
         },
         {
-            "name": "cuda-debug",
+            "name": "release",
             "hidden": false,
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_INSTALL_PREFIX": "/home/llogan/.scspkg/packages/massedon",
-                "CHIMAERA_ENABLE_CUDA": "ON",
-                "CHIMAERA_ENABLE_ROCM": "OFF",
                 "BUILD_TESTS": "OFF",
                 "MASSEDON_ENABLE_CMAKE_DOTENV": "ON"
             }
-        },
+        }
     ]
 }

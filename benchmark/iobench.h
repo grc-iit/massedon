@@ -1,39 +1,54 @@
 #ifndef IOBENCH_H
 #define IOBENCH_H
 
+#include <hermes_shm/util/random.h>
 #include <mpi.h>
 
-enum class IOPattern { SEQUENTIAL, RANDOM };
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iostream>
 
-enum class IOType { READ, WRITE };
+namespace mass {
 
-enum class IOEngine { POSIX, CUFILE };
+enum class IoPattern { kSequential, kRandom };
 
-class IoBench {
+class IoEngine {
  public:
   std::string filename_;
   size_t transfer_size_;  // Data size in each read / write call
   size_t block_size_;  // Size of data per process (i.e., larger than transfer
                        // size)
-  IOPattern io_pattern_;
+  IoPattern io_pattern_;
   int rank_;          // MPI rank
   int nprocs_;        // MPI # processes
   int percent_read_;  // Percent chance of read
-  std::random_device is_read_dev_;
-  std::mt19937 is_read_gen_;
-  std::uniform_int_distribution<size_t> is_read_distrib_;
+  hshm::UniformDistribution is_read_distrib_;
 
  public:
-  IoBench() {
+  IoEngine() {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs_);
-    is_read_gen_ = std::mt19937 gen(is_read_dev_());
-    is_read_distrib_ = std::uniform_int_distribution<float>(0, 100);
+    is_read_distrib_.Seed(rank_ + 8124891849);
+    is_read_distrib_.Shape(0, 100);
   }
   virtual void Open();
   virtual void Write(size_t offset, size_t size);
   virtual void Read(size_t offset, size_t size);
   virtual void Close();
+
+  void Run() {
+    switch (io_pattern_) {
+      case IoPattern::kSequential: {
+        SequentialIo();
+        break;
+      }
+      case IoPattern::kRandom: {
+        RandomIo();
+        break;
+      }
+    }
+  }
 
   bool CheckIfRead() {
     if (percent_read_ == 0) {
@@ -42,7 +57,7 @@ class IoBench {
     if (percent_read_ == 100) {
       return true;
     }
-    float test = is_read_distrib_(gen);
+    float test = is_read_distrib_.GetDouble();
     return test <= percent_read_;
   }
 
@@ -63,12 +78,11 @@ class IoBench {
 
   void RandomIo() {
     Open();
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<size_t> distrib(0,
-                                                  block_size - transfer_size);
-    for (size_t i = 0; i < 0; ++i) {
-      size_t offset = distrib(gen);
+    hshm::UniformDistribution distrib;
+    distrib.Seed(rank_ + 8124891849);
+    distrib.Shape(0, block_size_ - transfer_size_);
+    for (size_t i = 0; i < block_size_; i += transfer_size_) {
+      size_t offset = distrib.GetSize();
       bool is_read = CheckIfRead();
       if (is_read) {
         Read(offset, transfer_size_);
@@ -79,5 +93,7 @@ class IoBench {
     Close();
   }
 };
+
+}  // namespace mass
 
 #endif
