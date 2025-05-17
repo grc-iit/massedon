@@ -40,10 +40,10 @@ class IoEngine {
     is_read_distrib_.Shape(0, 100);
   }
   virtual ~IoEngine() = default;
-  virtual void Open();
-  virtual void Write(size_t offset, size_t size);
-  virtual void Read(size_t offset, size_t size);
-  virtual void Close();
+  virtual void Open() = 0;
+  virtual void Write(size_t offset, size_t size) = 0;
+  virtual void Read(size_t offset, size_t size) = 0;
+  virtual void Close() = 0;
 
   void Run() {
     switch (io_pattern_) {
