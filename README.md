@@ -2,6 +2,11 @@
 
 # Dependenceis
 
+``
+spack install iowarp +nocompile
+spack load iowarp
+```
+
 ```
 git clone https://github.com/iowarp/cte-hermes-shm.git
 cd cte-hermes-shm
