@@ -1,8 +1,13 @@
 #ifndef IOBENCH_H
 #define IOBENCH_H
 
+#include <cuda_runtime.h>
+#include <cufile.h>
+#include <fcntl.h>
 #include <hermes_shm/util/random.h>
 #include <mpi.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -12,6 +17,8 @@
 namespace mass {
 
 enum class IoPattern { kSequential, kRandom };
+
+enum class IoType {};
 
 class IoEngine {
  public:
@@ -32,6 +39,7 @@ class IoEngine {
     is_read_distrib_.Seed(rank_ + 8124891849);
     is_read_distrib_.Shape(0, 100);
   }
+  virtual ~IoEngine() = default;
   virtual void Open();
   virtual void Write(size_t offset, size_t size);
   virtual void Read(size_t offset, size_t size);

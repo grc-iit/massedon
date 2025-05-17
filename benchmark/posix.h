@@ -2,18 +2,27 @@
 #define IOBENCH_POSIX_H
 
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "iobench.h"
 
 namespace mass {
 
-// class PosixIoEngine : public IoEngine {
-//  public:
-// };
+class PosixIoEngine : public IoEngine {
+ public:
+  PosixIoEngine() = default;
+  ~PosixIoEngine() = default;
+
+  void Open() override {}
+  void Write(size_t offset, size_t size) override {}
+  void Read(size_t offset, size_t size) override {}
+  void Close() override {}
+};
 
 void posix_io(const std::string& filename, size_t transfer_size,
-              size_t block_size, IOType io_type, IoPattern io_pattern) {
+              size_t block_size, IoPattern io_pattern) {
   char* host_buffer;
   char* device_buffer;
 
@@ -31,8 +40,7 @@ void posix_io(const std::string& filename, size_t transfer_size,
 
   size_t num_transfers = block_size / transfer_size;
   for (size_t i = 0; i < num_transfers; ++i) {
-    size_t offset =
-        (io_pattern == IoPattern::kRandom) ? distrib(gen) : i * transfer_size;
+    size_t offset = i * transfer_size;
     file.seekp(offset);
     file.write(buffer.data(), transfer_size);
     cudaMemcpy(device_buffer, buffer.data(), transfer_size,
@@ -44,3 +52,5 @@ void posix_io(const std::string& filename, size_t transfer_size,
 }
 
 }  // namespace mass
+
+#endif
