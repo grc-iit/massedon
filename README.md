@@ -20,3 +20,19 @@ make -j8
 ```
 
 NOTE CMAKE_CUDA_ARCHITECTURES is important. On Delta it is 80.
+
+# Compiling 
+
+```
+cd massedon
+mkdir build
+cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=$(scspkg pkg root massedon)
+make -j32 install
+```
+
+# Usage
+```
+module load massedon
+iobench
+```
