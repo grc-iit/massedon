@@ -2,7 +2,7 @@
 
 # Dependenceis
 
-``
+```
 spack install iowarp +nocompile
 spack load iowarp
 ```
