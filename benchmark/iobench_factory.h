@@ -5,6 +5,7 @@
 
 #include "cufile_async.h"
 #include "cufile_sync.h"
+#include "cufile_batch.h"
 #include "iobench.h"
 #include "posix.h"
 
@@ -40,6 +41,8 @@ class IoEngineFactory {
       return std::make_unique<CufileSyncIoEngine>();
     } else if (io_engine_str == "cufile_async") {
       return std::make_unique<CufileAsyncIoEngine>();
+    } else if (io_engine_str == "cufile_batch") {
+      return std::make_unique<CufileBatchIoEngine>();
     } else {
       int rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
