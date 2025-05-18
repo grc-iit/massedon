@@ -16,17 +16,17 @@
 ##SBATCH --mail-user=you@yourinstitution.edu
 ##SBATCH --mail-type="BEGIN,END" See sbatch or srun man pages for more email options
 
-cd ${HOME}
-git clone https://github.com/iowarp/iowarp-install.git
+# cd ${HOME}
+# git clone https://github.com/iowarp/iowarp-install.git
 
-cd ${HOME}
-git clone https://github.com/spack/spack.git
-cd spack
-git checkout tags/v0.22.2
-echo ". ${PWD}/share/spack/setup-env.sh" >> ~/.bashrc
-source ~/.bashrc
+# cd ${HOME}
+# git clone https://github.com/spack/spack.git
+# cd spack
+# git checkout tags/v0.22.2
+# echo ". ${PWD}/share/spack/setup-env.sh" >> ~/.bashrc
+# source ~/.bashrc
 
-cd ${HOME}
-spack repo add iowarp-install/iowarp-spack
+# cd ${HOME}
+# spack repo add iowarp-install/iowarp-spack
 
 spack install -y iowarp +mpiio +vfd +nocompile

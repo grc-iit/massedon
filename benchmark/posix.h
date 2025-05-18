@@ -24,25 +24,37 @@ namespace mass {
 
 class PosixIoEngine : public IoEngine {
  public:
+  // Default constructor
+  PosixIoEngine() : IoEngine() {
+    fd_ = -1;
+    host_buffer_ = nullptr;
+    device_buffer_ = nullptr;
+  }
+
+  // Constructor with parameters
   PosixIoEngine(const std::string& filename, size_t transfer_size) 
-    : filename_(filename), transfer_size_(transfer_size), 
+    : IoEngine() {
+    // IoEngine::filename_ = filename;      // Initialize parent class member
+    // IoEngine::transfer_size_ = transfer_size;  // Initialize parent class member
+    // fd_ = -1;
+    // host_buffer_ = nullptr;
+    // device_buffer_ = nullptr;
+  }
 
   ~PosixIoEngine() = default;
 
-  void Open() override {}
-  void Write(size_t offset, size_t size) override {}
-  void Read(size_t offset, size_t size) override {}
-  void Close() override {}
+  void Open() override;
+  void Write(size_t offset, size_t size) override;
+  void Read(size_t offset, size_t size) override;
+  void Close() override;
   
-
   private:
   int fd_;
   char* host_buffer_;
   char* device_buffer_;
-  
 };
 
-void PosixIOEngine::Open() {
+void PosixIoEngine::Open() {
   // allocate mem in host buffer
   if( cudaMallocHost(&host_buffer_, transfer_size_) != cudaSuccess){
     throw std::runtime_error("Failed to allocate host memory");
@@ -64,7 +76,7 @@ void PosixIOEngine::Open() {
   }
 }
 
-void PosixIOEngine::Close() {
+void PosixIoEngine::Close() {
   if (fd_ != -1) {
       close(fd_);
       fd_ = -1;
@@ -79,56 +91,55 @@ void PosixIOEngine::Close() {
     }
 }
 
-  void Read(size_t offset, size_t size) {
-    if (fd_ == -1 || !host_buffer_ || !device_buffer_) {
-      throw std::runtime_error("File not opened or buffers not initialized");
-    }
+void PosixIoEngine::Read(size_t offset, size_t size) {
+  if (fd_ == -1 || !host_buffer_ || !device_buffer_) {
+    throw std::runtime_error("File not opened or buffers not initialized");
+  }
 
-    if (lseek(fd_, offset, SEEK_SET) == -1) {
-      throw std::system_error(errno, std::generic_category(), 
-        "Error seeking to offset: " + std::to_string(offset));
-    }
+  if (lseek(fd_, offset, SEEK_SET) == -1) {
+    throw std::system_error(errno, std::generic_category(), 
+      "Error seeking to offset: " + std::to_string(offset));
+  }
 
-    // First copy from device to host buffer
-    CUDA_CHECK(cudaMemcpy(host_buffer_, device_buffer_, size, cudaMemcpyDeviceToHost));
+  // First copy from device to host buffer
+  CUDA_CHECK(cudaMemcpy(host_buffer_, device_buffer_, size, cudaMemcpyDeviceToHost));
 
   // Then write from host buffer to file
   ssize_t bytes_written = write(fd_, host_buffer_, size);
 
-    if (bytes_written == -1) {
-      throw std::system_error(errno, std::generic_category(),
-        "Error writing to file at offset: " + std::to_string(offset));
-    }
-    if (static_cast<size_t>(bytes_written) != size) {
-      throw std::runtime_error("Wrote less than requested: " + 
-        std::to_string(bytes_written) + " < " + std::to_string(size));
-    }
+  if (bytes_written == -1) {
+    throw std::system_error(errno, std::generic_category(),
+      "Error writing to file at offset: " + std::to_string(offset));
+  }
+  if (static_cast<size_t>(bytes_written) != size) {
+    throw std::runtime_error("Wrote less than requested: " + 
+      std::to_string(bytes_written) + " < " + std::to_string(size));
+  }
+}
+
+void PosixIoEngine::Write(size_t offset, size_t size) {
+  if (fd_ == -1 || !host_buffer_ || !device_buffer_) {
+    throw std::runtime_error("File not opened or buffers not initialized");
+  }
+  
+  if (lseek(fd_, offset, SEEK_SET) == -1) {
+    throw std::system_error(errno, std::generic_category(),
+      "Error seeking to offset: " + std::to_string(offset));
   }
 
-  void Write(size_t offset, size_t size) {
-    if (fd_ == -1 || !host_buffer_ || !device_buffer_) {
-      throw std::runtime_error("File not opened or buffers not initialized");
-    }
-    
-    if (lseek(fd_, offset, SEEK_SET) == -1) {
-      throw std::system_error(errno, std::generic_category(),
-        "Error seeking to offset: " + std::to_string(offset));
-    }
-
-    ssize_t written = write(fd_, host_buffer_, size);
-    
-    if (written == -1) {
-      throw std::system_error(errno, std::generic_category(),
-        "Error writing to file at offset: " + std::to_string(offset));
-    }
-    if (static_cast<size_t>(written) != size) {
-      throw std::runtime_error("Write less than requested: " + 
-        std::to_string(written) + " < " + std::to_string(size));
-    }
-
-    CUDA_CHECK(cudaMemcpy(device_buffer_, host_buffer_, size, cudaMemcpyHostToDevice));
+  ssize_t written = write(fd_, host_buffer_, size);
+  
+  if (written == -1) {
+    throw std::system_error(errno, std::generic_category(),
+      "Error writing to file at offset: " + std::to_string(offset));
+  }
+  if (static_cast<size_t>(written) != size) {
+    throw std::runtime_error("Write less than requested: " + 
+      std::to_string(written) + " < " + std::to_string(size));
   }
 
+  CUDA_CHECK(cudaMemcpy(device_buffer_, host_buffer_, size, cudaMemcpyHostToDevice));
+}
 
 void posix_io(const std::string& filename, size_t transfer_size,
               size_t block_size, IoPattern io_pattern) {
