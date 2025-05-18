@@ -2,27 +2,6 @@
 
 # Dependenceis
 
-## CUDA (on personal only)
-```
-cd ~/Downloads
-sudo apt-key del 7fa2af80
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
-sudo dpkg -i cuda-keyring_1.1-1_all.deb
-sudo apt-get update
-sudo apt -y install cuda-toolkit
-sudo apt -y install cuda-drivers
-sudo apt-get install nvidia-gds
-```
-
-Create cuda module
-```
-scspkg create cuda
-scspkg env prepend cuda PATH /usr/local/cuda/gds/tools /usr/local/cuda/bin
-scspkg env prepend cuda CPATH /usr/local/cuda/targets/x86_64-linux/include
-scspkg env prepend cuda LIBRARY_PATH /usr/local/cuda/targets/x86_64-linux/lib
-scspkg env prepend cuda LD_LIBRARY_PATH /usr/local/cuda/targets/x86_64-linux/lib
-```
-
 ## IoWarp
 
 ### On personal
