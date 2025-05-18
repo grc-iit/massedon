@@ -26,8 +26,7 @@ git checkout tags/v0.22.2
 echo ". ${PWD}/share/spack/setup-env.sh" >> ~/.bashrc
 source ~/.bashrc
 
-# cd ${HOME}
-# spack repo add iowarp-install/iowarp-spack
+cd ${HOME}
+spack repo add iowarp-install/iowarp-spack
 
-# spack uninstall -y --all --dependents py-ppi-jarvis-util # iowarp-base
 spack install -y iowarp +mpiio +vfd +nocompile

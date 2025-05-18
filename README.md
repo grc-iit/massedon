@@ -2,7 +2,7 @@
 
 # Dependenceis
 
-## CUDA 
+## CUDA (on personal only)
 ```
 cd ~/Downloads
 sudo apt-key del 7fa2af80
