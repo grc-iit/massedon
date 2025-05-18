@@ -23,6 +23,7 @@ cmake ../ \
 -DBUILD_HSHM_TESTS=ON \
 -DHSHM_ENABLE_MPI=ON
 make -j8
+make install
 ```
 
 NOTE CMAKE_CUDA_ARCHITECTURES is important. On Delta it is 80.
