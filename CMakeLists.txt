@@ -117,6 +117,4 @@ add_subdirectory(benchmark)
 # -----------------------------------------------------------------------------
 # Install Hermes Headers
 # -----------------------------------------------------------------------------
-install(DIRECTORY include DESTINATION ${CMAKE_INSTALL_PREFIX})
-
 jarvis_repo_add("${CMAKE_SOURCE_DIR}/test/jarvis_massedon" "${CMAKE_SOURCE_DIR}/test/jarvis_massedon/pipelines")
