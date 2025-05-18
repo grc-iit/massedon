@@ -39,11 +39,12 @@ int main(int argc, char* argv[]) {
   mass::IoPattern io_pattern = mass::IoPatternFactory::Get(io_pattern_str);
 
   std::unique_ptr<mass::IoEngine> io_engine =
-      mass::IoEngineFactory::Get(io_engine_str);
+      mass::IoEngineFactory::Get(io_engine_str, transfer_size, block_size, io_pattern, percent_read, filename); 
 
   MPI_Barrier(MPI_COMM_WORLD);
   hshm::MpiTimer timer(MPI_COMM_WORLD);
   timer.Resume();
+  std::cout << "Running IO engine" << std::endl;
   io_engine->Run();
   timer.Pause();
   timer.Collect();  // Calls MPI_Barrier
@@ -52,7 +53,7 @@ int main(int argc, char* argv[]) {
     double duration = timer.GetMsec();
     double bandwidth = static_cast<double>(block_size) / (duration / 1000.0);
     HILOG(kInfo,
-          "IoEngine done in: api={} pattern={} precent_read={} nprocs={} "
+          "IoEngine done in: api={} pattern={} percent_read={} nprocs={} "
           "time={}ms "
           "io_size={}bytes",
           io_engine_str, io_pattern_str, percent_read, nprocs, duration,

@@ -35,8 +35,10 @@ class IoEngineFactory {
   template <typename... Args>
   static std::unique_ptr<IoEngine> Get(const std::string &io_engine_str,
                                        Args &&...args) {
+
+    std::cout << "IoEngineFactory: checking if posix/cufile/cufile_async.." << io_engine_str << std::endl;
     if (io_engine_str == "posix") {
-      return std::make_unique<PosixIoEngine>();
+      return std::make_unique<PosixIoEngine>(std::forward<Args>(args)...);
     } else if (io_engine_str == "cufile") {
       return std::make_unique<CufileSyncIoEngine>();
     } else if (io_engine_str == "cufile_async") {

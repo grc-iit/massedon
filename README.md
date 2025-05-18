@@ -70,5 +70,5 @@ make -j32 install
 # Usage
 ```bash
 module load massedon
-iobench
+iobench #iobench 4M 20M sequential 50 posix test_file_posix - sample input
 ```
