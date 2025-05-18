@@ -19,6 +19,7 @@ source ~/.bashrc
 
 Launch iowarp install:
 ```bash
+cd massedon
 sbatch job_specs/iowarp_install.sbatch
 ```
 
