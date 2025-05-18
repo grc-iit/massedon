@@ -6,7 +6,7 @@
 
 ### On personal
 ```bash
-spack install iowarp +mpi +vfd +nocompile
+spack install iowarp +encrypt +compress +mpiio +vfd +nocompile
 ```
 
 
