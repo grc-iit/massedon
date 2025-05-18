@@ -21,7 +21,8 @@ cmake ../ \
 -DHSHM_ENABLE_CUDA=OFF \
 -DHSHM_ENABLE_ROCM=OFF \
 -DBUILD_HSHM_TESTS=ON \
--DHSHM_ENABLE_MPI=ON
+-DHSHM_ENABLE_MPI=ON \
+-DCMAKE_INSTALL_PREFIX=$(scspkg pkg root hermes_shm)
 make -j8
 make install
 ```
