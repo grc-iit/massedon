@@ -26,7 +26,7 @@ scspkg env prepend cuda LD_LIBRARY_PATH /usr/local/cuda/targets/x86_64-linux/lib
 
 ```bash
 spack install iowarp +nocompile
-spack load iowarp
+spack load iowarp cuda
 ```
 
 ```bash
