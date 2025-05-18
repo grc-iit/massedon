@@ -59,6 +59,7 @@ module load hermes_shm
 # Compiling 
 
 ```bash
+scspkg create massedon
 cd massedon
 mkdir build
 cd build
