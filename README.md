@@ -2,7 +2,7 @@
 
 # Dependenceis
 
-## CUDA
+## CUDA 
 ```
 cd ~/Downloads
 sudo apt-key del 7fa2af80
@@ -22,14 +22,31 @@ scspkg env prepend cuda CPATH /usr/local/cuda/targets/x86_64-linux/include
 scspkg env prepend cuda LIBRARY_PATH /usr/local/cuda/targets/x86_64-linux/lib
 scspkg env prepend cuda LD_LIBRARY_PATH /usr/local/cuda/targets/x86_64-linux/lib
 ```
+
+## IoWarp
+
+### On personal
+```bash
+spack install iowarp +nocompile
+```
+
+
+### On delta
+Use proper cuda
+```bash
+echo "module load cuda/12.4.0" >> ~/.bashrc
+source ~/.bashrc
+```
+
+Launch iowarp install:
+```bash
+sbatch job_specs/iowarp_install.sbatch
+```
+
 ## HermesShm
 
 ```bash
-spack install iowarp +nocompile
-spack load iowarp cuda
-```
-
-```bash
+spack load iowarp
 scspkg create hermes_shm
 git clone https://github.com/iowarp/cte-hermes-shm.git
 cd cte-hermes-shm
