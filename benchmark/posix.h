@@ -34,11 +34,6 @@ class PosixIoEngine : public IoEngine {
   // Constructor with parameters
   PosixIoEngine(const std::string& filename, size_t transfer_size) 
     : IoEngine() {
-    // IoEngine::filename_ = filename;      // Initialize parent class member
-    // IoEngine::transfer_size_ = transfer_size;  // Initialize parent class member
-    // fd_ = -1;
-    // host_buffer_ = nullptr;
-    // device_buffer_ = nullptr;
   }
 
   ~PosixIoEngine() = default;
