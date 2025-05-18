@@ -13,7 +13,7 @@ cd cte-hermes-shm
 mkdir build
 cd build
 cmake ../ \
--DCMAKE_CUDA_ARCHITECTURES=native \  
+-DCMAKE_CUDA_ARCHITECTURES=native \
 -DHSHM_RPC_THALLIUM=ON \
 -DHSHM_ENABLE_COMPRESS=ON \
 -DHSHM_ENABLE_ENCRYPT=ON \
