@@ -19,10 +19,11 @@ class CufileAsyncIoEngine : public IoEngine {
   struct io_args_s
   {
     void *devicePtr = nullptr;
-    off_t offset = 0;
-    off_t buf_off = 0;
-    ssize_t read_bytes_done = 0;
-    ssize_t write_bytes_done = 0;
+    off_t offset ;
+    off_t buf_off;
+    ssize_t bytes_done = 0;
+    size_t last_io_size = 0;
+    size_t data_size = 0;
   };
 
   private:
@@ -33,8 +34,9 @@ class CufileAsyncIoEngine : public IoEngine {
   size_t total_size;
   std::vector<io_args_s> args;
   int io_depth_;
+  size_t count_ = 0;
   // io stream associated with the I/O
-	std::vector<cudaStream_t> io_stream;
+	cudaStream_t io_stream;
 
 
   public:
@@ -49,7 +51,6 @@ class CufileAsyncIoEngine : public IoEngine {
     this->io_depth_ = io_depth;
     total_size = transfer_size * io_depth;
     args.resize(io_depth_);
-    io_stream.resize(io_depth_);
   }
 
   ~CufileAsyncIoEngine(){
@@ -59,6 +60,7 @@ class CufileAsyncIoEngine : public IoEngine {
   void Write(size_t offset, size_t size) override;
   void Read(size_t offset, size_t size) override;
   void Close() override ;
+  void Verify();
 };
 
 void CufileAsyncIoEngine::Open() {
@@ -84,14 +86,15 @@ void CufileAsyncIoEngine::Open() {
       std::cerr << "cuFileBufRegister failed: " << status.err << std::endl;
       return ;
     }
-    args[i].offset = i * transfer_size_;
-    args[i].buf_off = args[i].offset;
-    args[i].read_bytes_done = 0;
-    args[i].write_bytes_done = 0;
-    cudaStreamCreateWithFlags(&io_stream[i], cudaStreamNonBlocking);
+    args[i].buf_off = 0;                 // always 0 unless using sub-buffers
+    args[i].data_size = transfer_size_;
+    args[i].bytes_done = 0;
+    args[i].last_io_size = 0;
+    cudaStreamCreateWithFlags(&io_stream, cudaStreamNonBlocking);
   }
 
-  fd_ = open(filename_.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_SYNC | O_DIRECT, 0644);
+
+  fd_ = open(filename_.c_str(), O_RDWR | O_CREAT | O_DIRECT, 0644);
   if (fd_ == -1){
     std::cerr << "Failed to open file: " << filename_ << std::endl;
     return ;
@@ -101,7 +104,7 @@ void CufileAsyncIoEngine::Open() {
   }
 
   // register file handle
-  memset(&cf_descr, 0, sizeof(CUfileDescr_t));
+  memset((void *)&cf_descr, 0, sizeof(CUfileDescr_t));
   cf_descr.handle.fd = fd_;
   cf_descr.type = CU_FILE_HANDLE_TYPE_OPAQUE_FD;
   status = cuFileHandleRegister(&cf_handle, &cf_descr);
@@ -120,14 +123,10 @@ void CufileAsyncIoEngine::Close(){
   for (int i = 0; i < io_depth_; i++) {
     std::cout << "Closing CufileAsync for io : " << i << std::endl;
 
+    cudaStreamSynchronize(io_stream);
 
-    cudaStreamSynchronize(io_stream[i]);
-    if (args[i].write_bytes_done != (ssize_t)block_size_) {
-      std::cerr << "Wrote less than requested: " << args[i].write_bytes_done << " < " << block_size_ << std::endl;
-    }
-
-    if (args[i].read_bytes_done != (ssize_t)block_size_) {
-      std::cerr << "Read less than requested: " << args[i].read_bytes_done << " < " << block_size_ << std::endl;
+    if (args[i].bytes_done != (ssize_t)transfer_size_) {
+      std::cerr << "Read for IO[" << i << "] less than requested: " << args[i].bytes_done << " < " << transfer_size_ << std::endl;
     }
 
     if (args[i].devicePtr) {
@@ -135,9 +134,9 @@ void CufileAsyncIoEngine::Close(){
       cudaFree(args[i].devicePtr);
       args[i].devicePtr = nullptr;
     }
-    if (io_stream[i]) {
-      cudaStreamDestroy(io_stream[i]);
-      io_stream[i] = nullptr;
+    if (io_stream) {
+      cudaStreamDestroy(io_stream);
+      io_stream = nullptr;
     }
   }
   if (cf_handle) {
@@ -152,34 +151,57 @@ void CufileAsyncIoEngine::Close(){
 
 void CufileAsyncIoEngine::Read(size_t offset, size_t size){
   std::cout << "Reading from CufileAsync" << std::endl;
-  for (int i = 0; i < io_depth_; i++) {
-    size_t read_size = size;
-    status = cuFileReadAsync(cf_handle, args[i].devicePtr, &read_size, &args[i].offset, &args[i].buf_off, &args[i].read_bytes_done, io_stream[i]);
-    if (status.err != CU_FILE_SUCCESS) {
+
+  int i = count_ % io_depth_;
+  args[i].offset = offset;           // file offset for this I/O
+  args[i].buf_off = 0;               // always 0 unless using sub-buffers
+  status = cuFileReadAsync(cf_handle, args[i].devicePtr, &args[i].data_size, &args[i].offset, &args[i].buf_off, &args[i].bytes_done, io_stream);
+  if (status.err != CU_FILE_SUCCESS) {
       std::cerr << "cuFileReadAsync failed: " << status.err << std::endl;
     }
-  }
+  args[i].last_io_size = args[i].data_size;
 
-  for (int i = 0; i < io_depth_; i++) {
-    cudaStreamSynchronize(io_stream[i]);
-    if (args[i].read_bytes_done != (ssize_t)size) {
-      std::cerr << "Read less than requested: " << args[i].read_bytes_done << " < " << size << std::endl;
-    }
+  if(i ==  io_depth_ - 1) {
+    cudaStreamSynchronize(io_stream);
+    Verify();
   }
+  count_++;
 }
 
 void CufileAsyncIoEngine::Write(size_t offset, size_t size){
   std::cout << "Writing to CufileAsync" << std::endl;
 
-  for (int i = 0; i < io_depth_; i++) {
-    size_t write_size = size;
-    status = cuFileWriteAsync(cf_handle, args[i].devicePtr, &write_size, &args[i].offset, &args[i].buf_off, &args[i].write_bytes_done, io_stream[i]);
-    if (status.err != CU_FILE_SUCCESS) {
+  int i = count_ % io_depth_;
+  args[i].offset = offset;            // file offset for this I/O
+  args[i].buf_off = 0; 
+
+  status = cuFileWriteAsync(cf_handle, args[i].devicePtr, &args[i].data_size, &args[i].offset, &args[i].buf_off, &args[i].bytes_done, io_stream);
+
+  if (status.err != CU_FILE_SUCCESS) {
       std::cerr << "cuFileWriteAsync failed: " << status.err << std::endl;
     }
-  }
-
   
+
+  if(i ==  io_depth_ - 1) {
+      cudaStreamSynchronize(io_stream);
+      Verify();
+    }
+  count_++;
+}
+
+void CufileAsyncIoEngine::Verify() {
+  std::cout << "Verifying CufileAsync" << std::endl;
+  for (int i = 0; i < io_depth_; i++) {
+    if (args[i].bytes_done != (ssize_t)args[i].data_size) {
+      std::cout << "args[" << i << "]: "
+              << "devicePtr=" << args[i].devicePtr << ", "
+              << "offset=" << args[i].offset << ", "
+              << "buf_off=" << args[i].buf_off << ", "
+              << "bytes_done=" << args[i].bytes_done << ", "
+              << "last_io_size=" << args[i].last_io_size << ", "
+              << "data_size=" << args[i].data_size << std::endl;
+      }
+  }
 }
 
 }  // namespace mass
