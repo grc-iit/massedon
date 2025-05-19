@@ -34,15 +34,15 @@ class IoEngineFactory {
  public:
   template <typename... Args>
   static std::unique_ptr<IoEngine> Get(const std::string &io_engine_str,
-                                       Args &&...args) {
+                                       size_t transfer_size, size_t block_size, IoPattern io_pattern, float percent_read, const std::string& filename, int io_depth) {
 
     std::cout << "IoEngineFactory: checking if posix/cufile/cufile_async.." << io_engine_str << std::endl;
     if (io_engine_str == "posix") {
-      return std::make_unique<PosixIoEngine>(std::forward<Args>(args)...);
+      return std::make_unique<PosixIoEngine>(transfer_size, block_size, io_pattern, percent_read, filename);
     } else if (io_engine_str == "cufile") {
       return std::make_unique<CufileSyncIoEngine>();
     } else if (io_engine_str == "cufile_async") {
-      return std::make_unique<CufileAsyncIoEngine>();
+      return std::make_unique<CufileAsyncIoEngine>(transfer_size, block_size, io_pattern, percent_read, filename, io_depth);
     } else if (io_engine_str == "cufile_batch") {
       return std::make_unique<CufileBatchIoEngine>();
     } else {

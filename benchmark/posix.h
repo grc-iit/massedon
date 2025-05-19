@@ -76,7 +76,6 @@ void PosixIoEngine::Open() {
   }
   else{
     std::cout << "File opened successfully" << std::endl;
-    
   }
 }
 

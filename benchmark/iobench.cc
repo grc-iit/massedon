@@ -17,12 +17,12 @@ int main(int argc, char* argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-  if (argc != 7) {
+  if (argc != 8) {
     if (rank == 0) {
       std::cerr
           << "Usage: " << argv[0]
           << " <transfer_size> <block_size> <io_pattern (random|sequential)>"
-          << " <percent_read (0-100)> <io_engine (posix|cufile)> <filename>"
+          << " <percent_read (0-100)> <io_engine (posix|cufile)> <filename> <io_depth>"
           << std::endl;
     }
     MPI_Finalize();
@@ -35,11 +35,15 @@ int main(int argc, char* argv[]) {
   float percent_read = hshm::ConfigParse::ParseNumber<float>(argv[4]);
   std::string io_engine_str = argv[5];
   std::string filename = argv[6];
+  // adding for io_depth
+  int io_depth = atoi(argv[7]);
+
+  std::cout << "IO depth: " << io_depth << std::endl;
 
   mass::IoPattern io_pattern = mass::IoPatternFactory::Get(io_pattern_str);
 
   std::unique_ptr<mass::IoEngine> io_engine =
-      mass::IoEngineFactory::Get(io_engine_str, transfer_size, block_size, io_pattern, percent_read, filename); 
+      mass::IoEngineFactory::Get(io_engine_str, transfer_size, block_size, io_pattern, percent_read, filename, io_depth); 
 
   MPI_Barrier(MPI_COMM_WORLD);
   hshm::MpiTimer timer(MPI_COMM_WORLD);
