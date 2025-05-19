@@ -1,5 +1,3 @@
-
-
 #ifndef CUFILE_BATCH_H
 #define CUFILE_BATCH_H
 
@@ -53,7 +51,7 @@ class CufileBatchIoEngine : public IoEngine {
     CUfileError_t status = cuFileDriverOpen();
     if (status.err != CU_FILE_SUCCESS) {
       throw std::runtime_error("cuFileDriverOpen failed: " +
-                               std::string(cuFileGetErrorString(status)));
+                               std::to_string(status.err));
     }
 
     // resize storage
@@ -80,7 +78,7 @@ class CufileBatchIoEngine : public IoEngine {
       status = cuFileHandleRegister(&cf_handles_[i], &cf_descr_[i]);
       if (status.err != CU_FILE_SUCCESS) {
         throw std::runtime_error("cuFileHandleRegister failed: " +
-                                 std::string(cuFileGetErrorString(status)));
+                                 std::to_string(status.err));
       }
     }
 
@@ -96,7 +94,7 @@ class CufileBatchIoEngine : public IoEngine {
       status = cuFileBufRegister(dev_ptrs_[i], io_size_, 0);
       if (status.err != CU_FILE_SUCCESS) {
         throw std::runtime_error("cuFileBufRegister failed: " +
-                                 std::string(cuFileGetErrorString(status)));
+                                 std::to_string(status.err));
       }
     }
   }
@@ -132,7 +130,7 @@ class CufileBatchIoEngine : public IoEngine {
  private:
   void submitBatch(size_t offset,
                    size_t size,
-                   CUfileOp_t op) {
+                   CUfileOpcode_t op) {
     // prepare batch parameters
     for (size_t i = 0; i < batch_size_; ++i) {
       io_params_[i].mode                  = CUFILE_BATCH;
@@ -147,7 +145,7 @@ class CufileBatchIoEngine : public IoEngine {
     CUfileError_t err = cuFileBatchIOSetUp(&batch_id_, batch_size_);
     if (err.err != CU_FILE_SUCCESS) {
       throw std::runtime_error("cuFileBatchIOSetUp failed: " +
-                               std::string(cuFileGetErrorString(err)));
+                               std::to_string(err.err));
     }
 
     err = cuFileBatchIOSubmit(batch_id_,
@@ -157,7 +155,7 @@ class CufileBatchIoEngine : public IoEngine {
     if (err.err != CU_FILE_SUCCESS) {
       cuFileBatchIODestroy(batch_id_);
       throw std::runtime_error("cuFileBatchIOSubmit failed: " +
-                               std::string(cuFileGetErrorString(err)));
+                               std::to_string(err.err));
     }
 
     // poll until all completions arrive
@@ -172,7 +170,7 @@ class CufileBatchIoEngine : public IoEngine {
       if (err.err != CU_FILE_SUCCESS) {
         cuFileBatchIODestroy(batch_id_);
         throw std::runtime_error("cuFileBatchIOGetStatus failed: " +
-                                 std::string(cuFileGetErrorString(err)));
+                                 std::to_string(err.err));
       }
       completed += nr;
     }
