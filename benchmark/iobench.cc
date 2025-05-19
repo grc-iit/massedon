@@ -47,9 +47,10 @@ int main(int argc, char* argv[]) {
 
   MPI_Barrier(MPI_COMM_WORLD);
   hshm::MpiTimer timer(MPI_COMM_WORLD);
-  timer.Resume();
   std::cout << "Running IO engine" << std::endl;
+  timer.Resume();
   io_engine->Run();
+  std::cout << "IO engine done" << std::endl;
   timer.Pause();
   timer.Collect();  // Calls MPI_Barrier
 

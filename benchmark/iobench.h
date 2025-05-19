@@ -70,6 +70,7 @@ class IoEngine {
   }
 
   void SequentialIo() {
+    std::cout << "SequentialIo Opens " << std::endl;
     Open();
     size_t proc_off = rank_ * block_size_;
     for (size_t i = 0; i < block_size_; i += transfer_size_) {
