@@ -1,5 +1,3 @@
-
-
 #ifndef CUFILE_BATCH_H
 #define CUFILE_BATCH_H
 
@@ -22,119 +20,163 @@ class CufileBatchIoEngine : public IoEngine {
  public:
   /// @param filepath   Path to the file to read/write
   /// @param device_id  CUDA device to use
-  /// @param batch_size Number of I/Os to batch per call
-  /// @param io_size    Size (in bytes) of each I/O
+  /// @param io_depth_ Number of I/Os to batch per call
+  /// @param transfer_size_    Size (in bytes) of each I/O
   /// @param flags      cuFileBatchIOSubmit flags (default 0)
   explicit CufileBatchIoEngine(const std::string& filepath,
                                int device_id,
-                               size_t batch_size,
-                               size_t io_size,
+                               IoPattern io_pattern,
+                               size_t io_depth, // number of I/Os to batch per call
+                               size_t transfer_size,
+                               size_t block_size,
                                unsigned int flags = 0)
     : filepath_(filepath)
     , device_id_(device_id)
-    , batch_size_(batch_size)
-    , io_size_(io_size)
     , flags_(flags)
     , batch_id_(0)
-  {}
+  {
+    io_pattern_ = io_pattern;
+    transfer_size_ = transfer_size;
+    block_size_ = block_size;
+    io_depth_ = io_depth;
+  }
 
   ~CufileBatchIoEngine() override {
     // best‐effort cleanup
-    try { Close(); } catch(...) {}
+    try { 
+      std::cout << "CufileBatchIoEngine: Destructor" << std::endl;
+      Close();
+    }
+    catch (const std::exception& e) {
+      std::cerr << "Exception in CufileBatchIoEngine destructor: " << e.what() << std::endl;
+    }
+    catch (...) {
+      std::cerr << "Unknown exception in CufileBatchIoEngine destructor." << std::endl;
+    }
   }
 
   void Open() override {
-    // select GPU
-    if (cudaSetDevice(device_id_) != cudaSuccess) {
-      throw std::runtime_error("cudaSetDevice failed");
-    }
-
-    // initialize the cuFile driver
-    CUfileError_t status = cuFileDriverOpen();
-    if (status.err != CU_FILE_SUCCESS) {
-      throw std::runtime_error("cuFileDriverOpen failed: " +
-                               std::string(cuFileGetErrorString(status)));
-    }
-
-    // resize storage
-    fds_.resize(batch_size_);
-    cf_descr_.resize(batch_size_);
-    cf_handles_.resize(batch_size_);
-    dev_ptrs_.resize(batch_size_);
-    io_params_.resize(batch_size_);
-    io_events_.resize(batch_size_);
-
-    // open & register file handles
-    for (size_t i = 0; i < batch_size_; ++i) {
-      fds_[i] = open(filepath_.c_str(),
-                     O_CREAT | O_RDWR | O_DIRECT,
-                     0664);
-      if (fds_[i] < 0) {
-        throw std::runtime_error("open() failed: " + std::string(std::strerror(errno)));
+    try {
+      std::cout << "CufileBatchIoEngine: Opening" << std::endl;
+      // select GPU
+      if (cudaSetDevice(device_id_) != cudaSuccess) {
+        throw std::runtime_error("cudaSetDevice failed");
       }
-
-      std::memset(&cf_descr_[i], 0, sizeof(CUfileDescr_t));
-      cf_descr_[i].handle.fd = fds_[i];
-      cf_descr_[i].type      = CU_FILE_HANDLE_TYPE_OPAQUE_FD;
-
-      status = cuFileHandleRegister(&cf_handles_[i], &cf_descr_[i]);
+      std::cout << "CufileBatchIoEngine: cudaSetDevice success" << std::endl;
+      // initialize the cuFile driver
+      CUfileError_t status = cuFileDriverOpen();
       if (status.err != CU_FILE_SUCCESS) {
-        throw std::runtime_error("cuFileHandleRegister failed: " +
-                                 std::string(cuFileGetErrorString(status)));
+        throw std::runtime_error("cuFileDriverOpen failed: " +
+                                 std::to_string(status.err));
       }
-    }
+      std::cout << "CufileBatchIoEngine: cuFileDriverOpen success" << std::endl;
+      // resize storage
+      fds_.resize(io_depth_, -1);
+      cf_descr_.resize(io_depth_);
+      cf_handles_.resize(io_depth_);
+      dev_ptrs_.resize(io_depth_);
+      io_params_.resize(io_depth_);
+      io_events_.resize(io_depth_);
 
-    // allocate & register GPU buffers
-    for (size_t i = 0; i < batch_size_; ++i) {
-      if (cudaMalloc(&dev_ptrs_[i], io_size_) != cudaSuccess) {
-        throw std::runtime_error("cudaMalloc failed");
-      }
-      // fill with pattern for verification
-      cudaMemset(dev_ptrs_[i], 0xAB, io_size_);
-      cudaStreamSynchronize(0);
+      // open & register file handles
+      for (size_t i = 0; i < io_depth_; ++i) {
+        fds_[i] = open(filepath_.c_str(),
+                       O_CREAT | O_RDWR | O_DIRECT,
+                       0664);
+        if (fds_[i] < 0) {
+          throw std::runtime_error("open() failed: " + std::string(std::strerror(errno)));
+        }
 
-      status = cuFileBufRegister(dev_ptrs_[i], io_size_, 0);
-      if (status.err != CU_FILE_SUCCESS) {
-        throw std::runtime_error("cuFileBufRegister failed: " +
-                                 std::string(cuFileGetErrorString(status)));
+        std::memset(&cf_descr_[i], 0, sizeof(CUfileDescr_t));
+        cf_descr_[i].handle.fd = fds_[i];
+        cf_descr_[i].type      = CU_FILE_HANDLE_TYPE_OPAQUE_FD;
+
+        status = cuFileHandleRegister(&cf_handles_[i], &cf_descr_[i]);
+        if (status.err != CU_FILE_SUCCESS) {
+          throw std::runtime_error("cuFileHandleRegister failed: " +
+                                   std::to_string(status.err));
+        }
       }
+
+      // allocate & register GPU buffers
+      for (size_t i = 0; i < io_depth_; ++i) {
+        if (cudaMalloc(&dev_ptrs_[i], transfer_size_) != cudaSuccess) {
+          throw std::runtime_error("cudaMalloc failed");
+        }
+        // fill with pattern for verification
+        cudaMemset(dev_ptrs_[i], 0xAB, transfer_size_);
+        cudaStreamSynchronize(0);
+
+        status = cuFileBufRegister(dev_ptrs_[i], transfer_size_, 0);
+        if (status.err != CU_FILE_SUCCESS) {
+          throw std::runtime_error("cuFileBufRegister failed: " +
+                                   std::to_string(status.err));
+        }
+      }
+    } catch (const std::exception& e) {
+      std::cerr << "Exception in Open(): " << e.what() << std::endl;
+      Close(); // Clean up any partially allocated resources
+      throw;   // Rethrow to propagate error
     }
   }
 
   void Write(size_t offset, size_t size) override {
-    submitBatch(offset, size, CUFILE_WRITE);
+    if (count_ % io_depth_== io_depth_ - 1){
+      submitBatch(offset, size, CUFILE_WRITE);
+    }
+    count_++;
   }
 
   void Read(size_t offset, size_t size) override {
-    submitBatch(offset, size, CUFILE_READ);
+    if (count_ % io_depth_== io_depth_ - 1){
+      submitBatch(offset, size, CUFILE_READ);
+    }
+    count_++;
   }
 
   void Close() override {
-    // deregister & free GPU buffers
-    for (void* ptr : dev_ptrs_) {
-      cuFileBufDeregister(ptr);
-      cudaFree(ptr);
+    std::cout << "CufileBatchIoEngine: Closing" << std::endl;
+    // Deregister & free GPU buffers
+    for (size_t i = 0; i < dev_ptrs_.size(); ++i) {
+      if (dev_ptrs_[i]) {
+        cuFileBufDeregister(dev_ptrs_[i]);
+        cudaFree(dev_ptrs_[i]);
+        dev_ptrs_[i] = nullptr;
+      }
     }
     dev_ptrs_.clear();
-
-    // deregister file handles & close FDs
-    for (size_t i = 0; i < batch_size_; ++i) {
-      cuFileHandleDeregister(cf_handles_[i]);
-      if (fds_[i] >= 0) close(fds_[i]);
+    std::cout << "CufileBatchIoEngine: dev_ptrs_.clear success" << std::endl;
+    // Deregister file handles & close FDs
+    for (size_t i = 0; i < cf_handles_.size(); ++i) {
+      if (cf_handles_[i]) {
+        cuFileHandleDeregister(cf_handles_[i]);
+        cf_handles_[i] = 0;
+      }
     }
     cf_handles_.clear();
+    std::cout << "CufileBatchIoEngine: cf_handles_.clear success" << std::endl;
+    for (size_t i = 0; i < fds_.size(); ++i) {
+      if (fds_[i] >= 0) {
+        close(fds_[i]);
+        fds_[i] = -1;
+      }
+    }
     fds_.clear();
-
-    // shut down driver
+    std::cout << "CufileBatchIoEngine: fds_.clear success" << std::endl;
+    // Shut down driver
     cuFileDriverClose();
+    std::cout << "CufileBatchIoEngine: cuFileDriverClose success" << std::endl;
   }
 
  private:
   void submitBatch(size_t offset,
                    size_t size,
-                   CUfileOp_t op) {
+                   CUfileOpcode_t op) {
     // prepare batch parameters
-    for (size_t i = 0; i < batch_size_; ++i) {
+    size_t count = io_depth_;
+    
+    for (size_t i = 0; i < count; ++i) {
+      
       io_params_[i].mode                  = CUFILE_BATCH;
       io_params_[i].fh                    = cf_handles_[i];
       io_params_[i].u.batch.devPtr_base   = dev_ptrs_[i];
@@ -142,37 +184,48 @@ class CufileBatchIoEngine : public IoEngine {
       io_params_[i].u.batch.file_offset   = offset + i * size;
       io_params_[i].u.batch.size          = size;
       io_params_[i].opcode                = op;
-    }
 
-    CUfileError_t err = cuFileBatchIOSetUp(&batch_id_, batch_size_);
+      
+      std::cout << "Setting up IO parameters for batch " << i << ":" << std::endl;
+      std::cout << "  Mode: " << (io_params_[i].mode == CUFILE_BATCH ? "CUFILE_BATCH" : "Unknown") << std::endl;
+      std::cout << "  File Handle: " << io_params_[i].fh << std::endl;
+      std::cout << "  Device Pointer Base: " << io_params_[i].u.batch.devPtr_base << std::endl;
+      std::cout << "  Device Pointer Offset: " << io_params_[i].u.batch.devPtr_offset << std::endl;
+      std::cout << "  File Offset: " << io_params_[i].u.batch.file_offset << std::endl;
+      std::cout << "  Size: " << io_params_[i].u.batch.size << std::endl;
+      std::cout << "  Opcode: " << (io_params_[i].opcode == CUFILE_WRITE ? "CUFILE_WRITE" : "CUFILE_READ") << std::endl;
+      std::cout << "----------------------------------------" << std::endl;
+    }
+    
+    CUfileError_t err = cuFileBatchIOSetUp(&batch_id_, io_depth_);
     if (err.err != CU_FILE_SUCCESS) {
       throw std::runtime_error("cuFileBatchIOSetUp failed: " +
-                               std::string(cuFileGetErrorString(err)));
+                               std::to_string(err.err));
     }
 
     err = cuFileBatchIOSubmit(batch_id_,
-                              batch_size_,
+                              io_depth_,
                               io_params_.data(),
                               flags_);
     if (err.err != CU_FILE_SUCCESS) {
       cuFileBatchIODestroy(batch_id_);
       throw std::runtime_error("cuFileBatchIOSubmit failed: " +
-                               std::string(cuFileGetErrorString(err)));
+                               std::to_string(err.err));
     }
 
     // poll until all completions arrive
     size_t completed = 0;
-    while (completed < batch_size_) {
-      unsigned int nr = batch_size_;
+    while (completed < io_depth_) {
+      unsigned int nr = io_depth_;
       err = cuFileBatchIOGetStatus(batch_id_,
-                                   batch_size_,
+                                   io_depth_,
                                    &nr,
                                    io_events_.data(),
                                    nullptr);
       if (err.err != CU_FILE_SUCCESS) {
         cuFileBatchIODestroy(batch_id_);
         throw std::runtime_error("cuFileBatchIOGetStatus failed: " +
-                                 std::string(cuFileGetErrorString(err)));
+                                 std::to_string(err.err));
       }
       completed += nr;
     }
@@ -182,10 +235,9 @@ class CufileBatchIoEngine : public IoEngine {
 
   std::string               filepath_;
   int                       device_id_;
-  size_t                    batch_size_;
-  size_t                    io_size_;
   unsigned int              flags_;
   CUfileBatchHandle_t       batch_id_;
+  size_t                    count_ = 0;
 
   std::vector<int>                fds_;
   std::vector<CUfileDescr_t>      cf_descr_;
