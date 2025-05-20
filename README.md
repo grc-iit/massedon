@@ -76,5 +76,5 @@ When running OIBench, you must first create the file and set up the percent to 0
 Ex. iobench 4M 20M sequential 0 cufile_async test_file 4
 
 
-Be particular about transfer_size and block_size!!
+Be particular about transfer_size and block_size !!
 Block size needs to be at least io_dept * transfer_size!!
