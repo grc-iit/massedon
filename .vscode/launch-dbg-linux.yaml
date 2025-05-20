@@ -1,32 +1,6 @@
 requirements:
   os: linux
 macros:
-  ext_cuda_debug:
-    name: $(launch-name)
-    type: cuda-gdb
-    request: launch
-    program: $(program)
-    args: $(args)
-    cwd: ${workspaceFolder}
-    environment: 
-      - name: "CHIMAERA_CONF"
-        value: "/home/llogan/.jarvis/shared/eternia_vector/chimaera_run/chimaera_server.yaml"
-      - name: "HERMES_CONF"
-        value: "/home/llogan/.jarvis/shared/eternia_run/hermes_run/hermes_server.yaml"
-      - name: "LD_LIBRARY_PATH"
-        value: /home/llogan/.scspkg/packages/eternia/lib64:/home/llogan/.scspkg/packages/eternia/lib:/home/llogan/.scspkg/packages/iowarp_runtime/lib64:/home/llogan/.scspkg/packages/iowarp_runtime/lib:/home/llogan/.scspkg/packages/cte/lib64:/home/llogan/.scspkg/packages/cte/lib:/home/llogan/.scspkg/packages/hermes_shm/lib64:/home/llogan/.scspkg/packages/hermes_shm/lib:/mnt/home/Projects/spack/opt/spack/linux-linuxmint22-zen4/gcc-13.3.0/iowarp-cte-main-vqsr2awspwiqdvnzvu3pmnbqa6kd27sn/lib:/mnt/home/Projects/spack/opt/spack/linux-linuxmint22-zen4/gcc-13.3.0/iowarp-runtime-main-fmrrb56b32lvqcxafpug3gfkn2xxj3ng/lib:/mnt/home/Projects/spack/opt/spack/linux-linuxmint22-zen4/gcc-13.3.0/libfabric-1.21.0-3ckoq7mnxiinox6p4u4liblqngexkd45/lib64:/mnt/home/Projects/spack/opt/spack/linux-linuxmint22-zen4/gcc-13.3.0/libfabric-1.21.0-3ckoq7mnxiinox6p4u4liblqngexkd45/lib:/usr/local/cuda/targets/x86_64-linux/lib:/home/llogan/Documents/Projects/scspkg/packages/cuda/lib64:/home/llogan/Documents/Projects/scspkg/packages/cuda/lib:/home/llogan/Documents/Projects/scspkg/packages/rocm/lib64:/home/llogan/Documents/Projects/scspkg/packages/rocm/lib:/mnt/home/Projects/spack/opt/spack/linux-linuxmint22-zen4/gcc-13.3.0/hdf5-1.14.3-djxqesflewbbj73tyallzy6kd6ofawc7/lib
-  cuda_debug:
-    name: $(launch-name)
-    type: cuda-gdb
-    request: launch
-    program: ${workspaceFolder}/build/bin/$(program)
-    args: $(args)
-    cwd: ${workspaceFolder}
-    environment: 
-      - name: "CHIMAERA_CONF"
-        value: "/home/llogan/.jarvis/shared/eternia_vector/chimaera_run/chimaera_server.yaml"
-      - name: "HERMES_CONF"
-        value: "/home/llogan/.jarvis/shared/eternia_run/hermes_run/hermes_server.yaml"
   ext_debug:
     name: $(launch-name)
     type: cppdbg
@@ -35,13 +9,6 @@ macros:
     args: $(args)
     stopAtEntry: false
     cwd: ${workspaceFolder}
-    environment: 
-      - name: "CHIMAERA_CONF"
-        value: "/home/llogan/.jarvis/shared/eternia_vector/chimaera_run/chimaera_server.yaml"
-      - name: "HERMES_CONF"
-        value: "/home/llogan/.jarvis/shared/eternia_run/hermes_run/hermes_server.yaml"
-      - name: "LD_LIBRARY_PATH"
-        value: /home/llogan/.scspkg/packages/eternia/lib64:/home/llogan/.scspkg/packages/eternia/lib:/home/llogan/.scspkg/packages/iowarp_runtime/lib64:/home/llogan/.scspkg/packages/iowarp_runtime/lib:/home/llogan/.scspkg/packages/cte/lib64:/home/llogan/.scspkg/packages/cte/lib:/home/llogan/.scspkg/packages/hermes_shm/lib64:/home/llogan/.scspkg/packages/hermes_shm/lib:/mnt/home/Projects/spack/opt/spack/linux-linuxmint22-zen4/gcc-13.3.0/iowarp-cte-main-vqsr2awspwiqdvnzvu3pmnbqa6kd27sn/lib:/mnt/home/Projects/spack/opt/spack/linux-linuxmint22-zen4/gcc-13.3.0/iowarp-runtime-main-fmrrb56b32lvqcxafpug3gfkn2xxj3ng/lib:/mnt/home/Projects/spack/opt/spack/linux-linuxmint22-zen4/gcc-13.3.0/libfabric-1.21.0-3ckoq7mnxiinox6p4u4liblqngexkd45/lib64:/mnt/home/Projects/spack/opt/spack/linux-linuxmint22-zen4/gcc-13.3.0/libfabric-1.21.0-3ckoq7mnxiinox6p4u4liblqngexkd45/lib:/usr/local/cuda/targets/x86_64-linux/lib:/home/llogan/Documents/Projects/scspkg/packages/cuda/lib64:/home/llogan/Documents/Projects/scspkg/packages/cuda/lib:/home/llogan/Documents/Projects/scspkg/packages/rocm/lib64:/home/llogan/Documents/Projects/scspkg/packages/rocm/lib:/mnt/home/Projects/spack/opt/spack/linux-linuxmint22-zen4/gcc-13.3.0/hdf5-1.14.3-djxqesflewbbj73tyallzy6kd6ofawc7/lib
     externalConsole: false
     MIMode: gdb
     setupCommands:
@@ -56,11 +23,6 @@ macros:
     args: $(args)
     stopAtEntry: false
     cwd: ${workspaceFolder}
-    environment: 
-      - name: "CHIMAERA_CONF"
-        value: "/home/llogan/.jarvis/shared/eternia_vector/chimaera_run/chimaera_server.yaml"
-      - name: "HERMES_CONF"
-        value: "/home/llogan/.jarvis/shared/eternia_run/hermes_run/hermes_server.yaml"
     externalConsole: false
     MIMode: gdb
     setupCommands:
@@ -84,19 +46,10 @@ macros:
 
 version: 0.2.0
 configurations:
-  - macro: rdebug
-    launch-name: remote-debug
-    port: 4000
-  - macro: rdebug
-    launch-name: client-debug
-    port: 4001
-  - macro: cuda_debug
-    launch-name: et_tensor
-    program: et_tensor
-    args: ["1 1 16m"]
-  - macro: ext_cuda_debug
-    launch-name: chimaera
-    program: /home/llogan/.scspkg/packages/iowarp_runtime/bin/chimaera_start_runtime
-    args: [""]
+  - macro: debug
+    launch-name: io_bench
+    program: iobench
+    args: ["4M 20M sequential 0 cufile_batch test_file 4"]
+  
 
     

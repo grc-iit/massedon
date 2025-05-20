@@ -20,21 +20,26 @@ class CufileBatchIoEngine : public IoEngine {
  public:
   /// @param filepath   Path to the file to read/write
   /// @param device_id  CUDA device to use
-  /// @param batch_size Number of I/Os to batch per call
-  /// @param io_size    Size (in bytes) of each I/O
+  /// @param io_depth_ Number of I/Os to batch per call
+  /// @param transfer_size_    Size (in bytes) of each I/O
   /// @param flags      cuFileBatchIOSubmit flags (default 0)
   explicit CufileBatchIoEngine(const std::string& filepath,
                                int device_id,
-                               size_t batch_size,
-                               size_t io_size,
+                               IoPattern io_pattern,
+                               size_t io_depth, // number of I/Os to batch per call
+                               size_t transfer_size,
+                               size_t block_size,
                                unsigned int flags = 0)
     : filepath_(filepath)
     , device_id_(device_id)
-    , batch_size_(batch_size)
-    , io_size_(io_size)
     , flags_(flags)
     , batch_id_(0)
-  {}
+  {
+    io_pattern_ = io_pattern;
+    transfer_size_ = transfer_size;
+    block_size_ = block_size;
+    io_depth_ = io_depth;
+  }
 
   ~CufileBatchIoEngine() override {
     // best‐effort cleanup
@@ -66,15 +71,15 @@ class CufileBatchIoEngine : public IoEngine {
       }
       std::cout << "CufileBatchIoEngine: cuFileDriverOpen success" << std::endl;
       // resize storage
-      fds_.resize(batch_size_, -1);
-      cf_descr_.resize(batch_size_);
-      cf_handles_.resize(batch_size_);
-      dev_ptrs_.resize(batch_size_);
-      io_params_.resize(batch_size_);
-      io_events_.resize(batch_size_);
+      fds_.resize(io_depth_, -1);
+      cf_descr_.resize(io_depth_);
+      cf_handles_.resize(io_depth_);
+      dev_ptrs_.resize(io_depth_);
+      io_params_.resize(io_depth_);
+      io_events_.resize(io_depth_);
 
       // open & register file handles
-      for (size_t i = 0; i < batch_size_; ++i) {
+      for (size_t i = 0; i < io_depth_; ++i) {
         fds_[i] = open(filepath_.c_str(),
                        O_CREAT | O_RDWR | O_DIRECT,
                        0664);
@@ -94,15 +99,15 @@ class CufileBatchIoEngine : public IoEngine {
       }
 
       // allocate & register GPU buffers
-      for (size_t i = 0; i < batch_size_; ++i) {
-        if (cudaMalloc(&dev_ptrs_[i], io_size_) != cudaSuccess) {
+      for (size_t i = 0; i < io_depth_; ++i) {
+        if (cudaMalloc(&dev_ptrs_[i], transfer_size_) != cudaSuccess) {
           throw std::runtime_error("cudaMalloc failed");
         }
         // fill with pattern for verification
-        cudaMemset(dev_ptrs_[i], 0xAB, io_size_);
+        cudaMemset(dev_ptrs_[i], 0xAB, transfer_size_);
         cudaStreamSynchronize(0);
 
-        status = cuFileBufRegister(dev_ptrs_[i], io_size_, 0);
+        status = cuFileBufRegister(dev_ptrs_[i], transfer_size_, 0);
         if (status.err != CU_FILE_SUCCESS) {
           throw std::runtime_error("cuFileBufRegister failed: " +
                                    std::to_string(status.err));
@@ -162,7 +167,8 @@ class CufileBatchIoEngine : public IoEngine {
                    size_t size,
                    CUfileOpcode_t op) {
     // prepare batch parameters
-    for (size_t i = 0; i < batch_size_; ++i) {
+    for (size_t i = 0; i < io_depth_; ++i) {
+      
       io_params_[i].mode                  = CUFILE_BATCH;
       io_params_[i].fh                    = cf_handles_[i];
       io_params_[i].u.batch.devPtr_base   = dev_ptrs_[i];
@@ -170,16 +176,27 @@ class CufileBatchIoEngine : public IoEngine {
       io_params_[i].u.batch.file_offset   = offset + i * size;
       io_params_[i].u.batch.size          = size;
       io_params_[i].opcode                = op;
-    }
 
-    CUfileError_t err = cuFileBatchIOSetUp(&batch_id_, batch_size_);
+      
+      std::cout << "Setting up IO parameters for batch " << i << ":" << std::endl;
+      std::cout << "  Mode: " << (io_params_[i].mode == CUFILE_BATCH ? "CUFILE_BATCH" : "Unknown") << std::endl;
+      std::cout << "  File Handle: " << io_params_[i].fh << std::endl;
+      std::cout << "  Device Pointer Base: " << io_params_[i].u.batch.devPtr_base << std::endl;
+      std::cout << "  Device Pointer Offset: " << io_params_[i].u.batch.devPtr_offset << std::endl;
+      std::cout << "  File Offset: " << io_params_[i].u.batch.file_offset << std::endl;
+      std::cout << "  Size: " << io_params_[i].u.batch.size << std::endl;
+      std::cout << "  Opcode: " << (io_params_[i].opcode == CUFILE_WRITE ? "CUFILE_WRITE" : "CUFILE_READ") << std::endl;
+      std::cout << "----------------------------------------" << std::endl;
+    }
+    
+    CUfileError_t err = cuFileBatchIOSetUp(&batch_id_, io_depth_);
     if (err.err != CU_FILE_SUCCESS) {
       throw std::runtime_error("cuFileBatchIOSetUp failed: " +
                                std::to_string(err.err));
     }
 
     err = cuFileBatchIOSubmit(batch_id_,
-                              batch_size_,
+                              io_depth_,
                               io_params_.data(),
                               flags_);
     if (err.err != CU_FILE_SUCCESS) {
@@ -190,10 +207,10 @@ class CufileBatchIoEngine : public IoEngine {
 
     // poll until all completions arrive
     size_t completed = 0;
-    while (completed < batch_size_) {
-      unsigned int nr = batch_size_;
+    while (completed < io_depth_) {
+      unsigned int nr = io_depth_;
       err = cuFileBatchIOGetStatus(batch_id_,
-                                   batch_size_,
+                                   io_depth_,
                                    &nr,
                                    io_events_.data(),
                                    nullptr);
@@ -210,8 +227,6 @@ class CufileBatchIoEngine : public IoEngine {
 
   std::string               filepath_;
   int                       device_id_;
-  size_t                    batch_size_;
-  size_t                    io_size_;
   unsigned int              flags_;
   CUfileBatchHandle_t       batch_id_;
 

@@ -26,6 +26,7 @@ class IoEngine {
   size_t transfer_size_;  // Data size in each read / write call
   size_t block_size_;  // Size of data per process (i.e., larger than transfer
                        // size)
+  size_t io_depth_ = 1;  // Number of I/Os to batch per call
   IoPattern io_pattern_;
   int rank_;          // MPI rank
   int nprocs_;        // MPI # processes

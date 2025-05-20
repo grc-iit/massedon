@@ -44,7 +44,7 @@ class IoEngineFactory {
     } else if (io_engine_str == "cufile_async") {
       return std::make_unique<CufileAsyncIoEngine>(transfer_size, block_size, io_pattern, percent_read, filename, io_depth);
     } else if (io_engine_str == "cufile_batch") {
-      return std::make_unique<CufileBatchIoEngine>(filename, 0, io_depth, transfer_size, 0);
+      return std::make_unique<CufileBatchIoEngine>(filename, 0, io_pattern, io_depth, transfer_size, block_size, 0);
     } else {
       int rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);

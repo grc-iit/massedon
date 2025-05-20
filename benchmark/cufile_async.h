@@ -33,7 +33,6 @@ class CufileAsyncIoEngine : public IoEngine {
   CUfileHandle_t cf_handle = nullptr;
   size_t total_size;
   std::vector<io_args_s> args;
-  int io_depth_;
   size_t count_ = 0;
   // io stream associated with the I/O
 	cudaStream_t io_stream;
