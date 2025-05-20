@@ -121,11 +121,17 @@ class CufileBatchIoEngine : public IoEngine {
   }
 
   void Write(size_t offset, size_t size) override {
-    submitBatch(offset, size, CUFILE_WRITE);
+    if (count_ % io_depth_== io_depth_ - 1){
+      submitBatch(offset, size, CUFILE_WRITE);
+    }
+    count_++;
   }
 
   void Read(size_t offset, size_t size) override {
-    submitBatch(offset, size, CUFILE_READ);
+    if (count_ % io_depth_== io_depth_ - 1){
+      submitBatch(offset, size, CUFILE_READ);
+    }
+    count_++;
   }
 
   void Close() override {
@@ -167,7 +173,9 @@ class CufileBatchIoEngine : public IoEngine {
                    size_t size,
                    CUfileOpcode_t op) {
     // prepare batch parameters
-    for (size_t i = 0; i < io_depth_; ++i) {
+    size_t count = io_depth_;
+    
+    for (size_t i = 0; i < count; ++i) {
       
       io_params_[i].mode                  = CUFILE_BATCH;
       io_params_[i].fh                    = cf_handles_[i];
@@ -229,6 +237,7 @@ class CufileBatchIoEngine : public IoEngine {
   int                       device_id_;
   unsigned int              flags_;
   CUfileBatchHandle_t       batch_id_;
+  size_t                    count_ = 0;
 
   std::vector<int>                fds_;
   std::vector<CUfileDescr_t>      cf_descr_;
