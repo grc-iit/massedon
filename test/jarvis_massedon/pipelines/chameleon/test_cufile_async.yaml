@@ -1,0 +1,20 @@
+config:
+  name: cufile_sync_test
+  env: massedon
+  pkgs: 
+    - pkg_type: massedon_unit_tests
+      pkg_name: mass
+      do_dbg: false
+      dbg_port: 4001
+      nprocs: 1
+      ppn: 32
+      block_size: 16g
+vars:
+  mass.transfer_size: [4k, 16k, 64k, 128k, 1m, 16m, 1g, 16g]
+  mass.percent_read: [0, 25, 50, 100]
+  mass.nprocs: [1]
+loop:
+  - [mass.transfer_size]
+  - [mass.percent_read]
+repeat: 3
+output: "${SHARED_DIR}/output_multi"
