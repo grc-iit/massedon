@@ -3,6 +3,7 @@ This module provides classes and methods to launch the LabstorIpcTest applicatio
 LabstorIpcTest is ....
 """
 from jarvis_cd.basic.pkg import Application
+import re
 from jarvis_util import *
 
 
@@ -283,8 +284,9 @@ class Gdsio(Application):
         max_throughput = 0
         if self.gdsio_exec is not None:
             for line in self.gdsio_exec.stdout:
-                if 'Throughput:' in line:
-                    throughput = float(line.split('Throughput:')[1].split()[0])
+                match = re.search(r'Throughput:\s*([\d.]+)\s*GiB/sec', line)
+                if match:
+                    throughput = float(match.group(1))
                     max_throughput = max(max_throughput, throughput)
         return max_throughput
     
