@@ -27,10 +27,12 @@ vars:
   gdsio.numa: [0]
   gdsio.batch_size: [16]
 loop:
+  - [gdsio.xfer_type]
   - [gdsio.io_size]
   - [gdsio.io_type]
   - [gdsio.threads]
   - [gdsio.nodes]
   - [gdsio.numa]
+  - [gdsio.batch_size]
 repeat: 1
 output: "${SHARED_DIR}/output_multi"
