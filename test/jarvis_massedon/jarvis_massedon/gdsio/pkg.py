@@ -92,8 +92,8 @@ class Gdsio(Application):
                 'default': '1M',
             },
             {
-                'name': 'xfer_type [0(GPU_DIRECT), 1(CPU_ONLY), 2(CPU_GPU), 3(CPU_ASYNC_GPU), 4(CPU_CACHED_GPU), 5(GPU_DIRECT_ASYNC), 6(GPU_BATCH), 7(GPU_BATCH_STREAM)]',
-                'msg': 'Transfer type [0-7]',
+                'name': 'xfer_type',
+                'msg': ' [0(GPU_DIRECT), 1(CPU_ONLY), 2(CPU_GPU), 3(CPU_ASYNC_GPU), 4(CPU_CACHED_GPU), 5(GPU_DIRECT_ASYNC), 6(GPU_BATCH), 7(GPU_BATCH_STREAM)]',
                 'type': int,
                 'default': 0,
             },
