@@ -179,7 +179,7 @@ class Gdsio(Application):
                 'name': 'job_stats',
                 'msg': 'Per job statistics',
                 'type': bool,
-                'default': False,
+                'default': True,
             }
         ]
 
