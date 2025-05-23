@@ -281,9 +281,7 @@ class Gdsio(Application):
         if self.gdsio_exec is not None:
             for line in self.gdsio_exec.stdout:
                 if 'Throughput:' in line:
-                    match = re.search(r'Throughput:\s*([\d.]+)', line)
-                    if match:
-                        throughput = float(match.group(1))
-                        max_throughput = max(max_throughput, throughput)
+                    throughput = float(line.split('Throughput:')[1].split()[0])
+                    max_throughput = max(max_throughput, throughput)
         return max_throughput
     
