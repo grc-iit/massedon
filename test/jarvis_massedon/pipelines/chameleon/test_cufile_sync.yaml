@@ -2,19 +2,30 @@ config:
   name: cufile_sync_test
   env: massedon
   pkgs: 
-    - pkg_type: massedon_unit_tests
-      pkg_name: mass
+    - pkg_type: gdsio
+      pkg_name: gdsio
       do_dbg: false
       dbg_port: 4001
-      nprocs: 1
-      ppn: 32
-      block_size: 16g
+
+      nodes: 1
+      gpu_index: 0
+      directory: /mnt/nvme1
+      duration: 30
+      io_size: 4k
+      threads: 1
+      io_type: 1  # (0-read, 1-write, 2-randread, 3-randwrite)
+      random_seed: 25892892
+      unaligned: true
+      numa: 0
 vars:
-  mass.transfer_size: [4k, 16k, 64k, 128k, 1m, 16m, 1g, 16g]
-  mass.percent_read: [0, 25, 50, 100]
-  mass.nprocs: [1]
+  gdsio.io_size: [4k, 16k, 64k, 128k, 1m, 16m, 1g, 16g]
+  gdsio.io_type: [0, 1, 2, 3]
+  gdsio.threads: [1, 2, 4, 8, 16, 32]
+  gdsio.nprocs: [1]
+  gdsio.numa: [0, 1]
 loop:
-  - [mass.transfer_size]
-  - [mass.percent_read]
+  - [gdsio.io_size]
+  - [gdsio.threads]
+  - [gdsio.nprocs]
 repeat: 3
 output: "${SHARED_DIR}/output_multi"

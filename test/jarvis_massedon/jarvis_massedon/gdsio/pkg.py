@@ -149,7 +149,7 @@ class Gdsio(Application):
                 'name': 'random_data',
                 'msg': 'Fill IO buffer with random data',
                 'type': bool,
-                'default': False,
+                'default': True,
             },
             {
                 'name': 'refill_random',
@@ -229,12 +229,14 @@ class Gdsio(Application):
         ]
         cmd = ' '.join(cmd)
         print(cmd)
-        Exec(cmd,
+        self.gdsio_exec = Exec(cmd,
                 MpiExecInfo(nprocs=self.config['nodes'],
                             ppn=1,
                             env=self.env,
-                             do_dbg=self.config['do_dbg'],
-                             dbg_port=self.config['dbg_port']))
+                            exec_async=self.config['async'],
+                            do_dbg=self.config['do_dbg'],
+                            dbg_port=self.config['dbg_port'],
+                            collect_output=True))
 
     def stop(self):
         """
@@ -256,4 +258,32 @@ class Gdsio(Application):
         """
         pass
 
+    def _get_stat(self, stat_dict):
+        """
+        Get statistics from the application.
+
+        :param stat_dict: A dictionary of statistics.
+        :return: None
+        """
+        stat_dict[f'{self.pkg_id}.runtime'] = self.parse_stdout()
+        stat_dict[f'{self.pkg_id}.io_size'] = self.config['io_size']
+        stat_dict[f'{self.pkg_id}.threads'] = self.config['threads']
+        stat_dict[f'{self.pkg_id}.batch_size'] = self.config['batch_size']
+        stat_dict[f'{self.pkg_id}.io_type'] = self.config['io_type']
+        stat_dict[f'{self.pkg_id}.unaligned'] = self.config['unaligned']
+        stat_dict[f'{self.pkg_id}.directory'] = self.config['directory']
+        stat_dict[f'{self.pkg_id}.numa'] = self.config['numa']
+        stat_dict[f'{self.pkg_id}.nodes'] = self.config['nodes']
+        stat_dict[f'{self.pkg_id}.start_time'] = self.start_time
+
+    def parse_stdout(self):
+        max_throughput = 0
+        if self.gdsio_exec is not None:
+            for line in self.gdsio_exec.stdout:
+                if 'Throughput:' in line:
+                    match = re.search(r'Throughput:\s*([\d.]+)', line)
+                    if match:
+                        throughput = float(match.group(1))
+                        max_throughput = max(max_throughput, throughput)
+        return max_throughput
     
