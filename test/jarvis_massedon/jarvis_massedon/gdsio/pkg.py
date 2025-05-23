@@ -92,7 +92,7 @@ class Gdsio(Application):
                 'default': '1M',
             },
             {
-                'name': 'xfer_type',
+                'name': 'xfer_type [0(GPU_DIRECT), 1(CPU_ONLY), 2(CPU_GPU), 3(CPU_ASYNC_GPU), 4(CPU_CACHED_GPU), 5(GPU_DIRECT_ASYNC), 6(GPU_BATCH), 7(GPU_BATCH_STREAM)]',
                 'msg': 'Transfer type [0-7]',
                 'type': int,
                 'default': 0,
@@ -265,7 +265,7 @@ class Gdsio(Application):
         :param stat_dict: A dictionary of statistics.
         :return: None
         """
-        stat_dict[f'{self.pkg_id}.runtime'] = self.parse_stdout()
+        stat_dict[f'{self.pkg_id}.gbps'] = self.parse_thrpt()
         stat_dict[f'{self.pkg_id}.io_size'] = self.config['io_size']
         stat_dict[f'{self.pkg_id}.threads'] = self.config['threads']
         stat_dict[f'{self.pkg_id}.batch_size'] = self.config['batch_size']
@@ -276,7 +276,7 @@ class Gdsio(Application):
         stat_dict[f'{self.pkg_id}.nodes'] = self.config['nodes']
         stat_dict[f'{self.pkg_id}.start_time'] = self.start_time
 
-    def parse_stdout(self):
+    def parse_thrpt(self):
         max_throughput = 0
         if self.gdsio_exec is not None:
             for line in self.gdsio_exec.stdout:

@@ -19,14 +19,14 @@ config:
       unaligned: true
       numa: 0
 vars:
-  gdsio.xfer_type: [0, 2, 4]
-  gdsio.io_size: [4K, 16K, 64K, 128K, 1M, 16M, 1G, 16G]
+  gdsio.xfer_type: [5, 6, 7]
+  gdsio.io_size: [4K, 16K, 64K, 128K, 1M, 16M]
   gdsio.io_type: [0, 1, 2, 3]
-  gdsio.threads: [1, 2, 4, 8, 16, 32, 64, 128]
+  gdsio.threads: [1]
   gdsio.nodes: [1]
   gdsio.numa: [0, 1]
+  gdsio.batch_size: [1, 2, 4, 8, 16, 32, 64, 128]
 loop:
-  - [gdsio.xfer_type]
   - [gdsio.io_size]
   - [gdsio.io_type]
   - [gdsio.threads]
