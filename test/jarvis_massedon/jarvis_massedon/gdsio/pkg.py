@@ -202,7 +202,7 @@ class Gdsio(Application):
         :return: None
         """
         use_batch_size = False
-        if self.config['xfer_type'] == 3 or self.config['xfer_type'] >= 5:
+        if self.config['xfer_type'] == 3 or self.config['xfer_type'] > 5:
             use_batch_size = True
         cmd = [
             '/usr/local/cuda/gds/tools/gdsio',
