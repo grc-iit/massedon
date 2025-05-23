@@ -19,7 +19,7 @@ config:
       unaligned: false
       numa: 0
 vars:
-  gdsio.xfer_type: [5, 6, 7]
+  gdsio.xfer_type: [6, 7]
   gdsio.io_size: [4K, 16K, 64K, 128K, 1M, 16M]
   gdsio.io_type: [0, 1, 2, 3]
   gdsio.threads: [1, 128]
@@ -27,10 +27,12 @@ vars:
   gdsio.numa: [0, 1]
   gdsio.batch_size: [1, 2, 4, 8, 16, 32, 64, 128]
 loop:
+  - [gdsio.xfer_type]
   - [gdsio.io_size]
   - [gdsio.io_type]
   - [gdsio.threads]
   - [gdsio.nodes]
   - [gdsio.numa]
+  - [gdsio.batch_size]
 repeat: 1
 output: "${SHARED_DIR}/output_multi"
