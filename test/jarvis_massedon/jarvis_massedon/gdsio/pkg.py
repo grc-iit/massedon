@@ -269,15 +269,8 @@ class Gdsio(Application):
         :param stat_dict: A dictionary of statistics.
         :return: None
         """
+        print(f"THRPT: {self.parse_thrpt()}")
         stat_dict[f'{self.pkg_id}.gbps'] = self.parse_thrpt()
-        stat_dict[f'{self.pkg_id}.io_size'] = self.config['io_size']
-        stat_dict[f'{self.pkg_id}.threads'] = self.config['threads']
-        stat_dict[f'{self.pkg_id}.batch_size'] = self.config['batch_size']
-        stat_dict[f'{self.pkg_id}.io_type'] = self.config['io_type']
-        stat_dict[f'{self.pkg_id}.unaligned'] = self.config['unaligned']
-        stat_dict[f'{self.pkg_id}.directory'] = self.config['directory']
-        stat_dict[f'{self.pkg_id}.numa'] = self.config['numa']
-        stat_dict[f'{self.pkg_id}.nodes'] = self.config['nodes']
         stat_dict[f'{self.pkg_id}.start_time'] = self.start_time
 
     def parse_thrpt(self):
