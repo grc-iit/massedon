@@ -19,9 +19,9 @@ config:
       unaligned: false
       numa: 0
 vars:
-  gdsio.xfer_type: [0, 2, 4]
+  gdsio.xfer_type: [1]
   gdsio.io_size: [4K]
-  gdsio.io_type: [0]
+  gdsio.io_type: [1]
   gdsio.threads: [128]
   gdsio.nodes: [1]
   gdsio.numa: [0]

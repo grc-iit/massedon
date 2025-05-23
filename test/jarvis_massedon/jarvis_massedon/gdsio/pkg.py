@@ -269,15 +269,14 @@ class Gdsio(Application):
         :param stat_dict: A dictionary of statistics.
         :return: None
         """
-        print(f"THRPT: {self.parse_thrpt()}")
         stat_dict[f'{self.pkg_id}.gbps'] = self.parse_thrpt()
         stat_dict[f'{self.pkg_id}.start_time'] = self.start_time
 
     def parse_thrpt(self):
         max_throughput = 0
         if self.gdsio_exec is not None:
-            for line in self.gdsio_exec.stdout:
-                match = re.search(r'Throughput:\s*([\d.]+)\s*GiB/sec', line)
+            for host, out in self.gdsio_exec.stdout.items():
+                match = re.search(r'Throughput:\s*([\d.]+)\s*GiB/sec', out)
                 if match:
                     throughput = float(match.group(1))
                     max_throughput = max(max_throughput, throughput)
