@@ -203,7 +203,7 @@ class Gdsio(Application):
         cmd = [
             '/usr/local/cuda/gds/tools/gdsio',
             f"-f {self.config['file']}" if self.config['file'] else "",
-            f"-D {self.config['directory']}" if self.config['directory'] else "",
+            f"-D {self.config['directory']}" if self.config['directory'] else "", 
             f"-d {self.config['gpu_index']}",
             f"-n {self.config['numa']}" if self.config['numa'] is not None else "",
             f"-m {self.config['memtype']}",
@@ -215,7 +215,7 @@ class Gdsio(Application):
             "-b" if self.config['skip_bufregister'] else "",
             "-V" if self.config['verify'] else "",
             f"-x {self.config['xfer_type']}",
-            f"-B {self.config['batch_size']}",
+            f"-B {self.config['batch_size']}" if self.config['xfer_type'] == 2 else "",
             f"-I {self.config['io_type']}",
             f"-T {self.config['duration']}" if self.config['duration'] > 0 else "",
             f"-k {self.config['random_seed']}" if self.config['random_seed'] is not None else "",
