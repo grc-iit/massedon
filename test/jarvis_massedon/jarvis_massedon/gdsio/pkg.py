@@ -125,7 +125,7 @@ class Gdsio(Application):
                 'name': 'io_type',
                 'msg': 'IO type (0-read, 1-write, 2-randread, 3-randwrite)',
                 'type': int,
-                'default': 0,
+                'default': 1,
             },
             {
                 'name': 'duration',
