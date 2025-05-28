@@ -19,7 +19,7 @@ config:
 vars:
   gdsio.xfer_type: [0, 2]
   gdsio.io_size: [4K, 16M]
-  gdsio.io_type: [0]
+  gdsio.io_type: [1]
   gdsio.threads: [1, 128]
   gdsio.nodes: [1]
   gdsio.numa: [0]
