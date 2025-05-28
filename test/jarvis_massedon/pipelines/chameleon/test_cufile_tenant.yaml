@@ -11,14 +11,12 @@ config:
       gpu_index: 0
       file: /mnt/nvme1/gdsio1
       duration: 30
-      io_size: 4k
-      threads: 0-64
+      io_size: 4k 
       io_type: 1  # (0-read, 1-write, 2-randread, 3-randwrite)
       random_seed: 25892892
       unaligned: false
       numa: 0
-      exec_async: true
-      cpu_affinity: 0-64
+      exec_async: true 
 
     - pkg_type: gdsio
       pkg_name: gdsio2
@@ -29,8 +27,7 @@ config:
       gpu_index: 0
       file: /mnt/nvme1/gdsio2
       duration: 30
-      io_size: 16m
-      threads: 128
+      io_size: 16m 
       io_type: 1
       random_seed: 25892892
       unaligned: false
