@@ -1,0 +1,29 @@
+config:
+  name: cufile_sync_test
+  env: massedon
+  pkgs: 
+    - pkg_type: gdsio
+      pkg_name: gdsio
+      do_dbg: false
+      dbg_port: 4001
+      nodes: 1
+      xfer_type: 0
+      gpu_index: 0
+      file: /mnt/nvme1/gdsio1
+      duration: 60
+      io_size: 4k 
+      io_type: 1  # (0-read, 1-write, 2-randread, 3-randwrite)
+      random_seed: 25892892
+      unaligned: false
+      numa: 1
+      async: true 
+vars:
+  gdsio.io_size: [4k, 1m, 16m]
+  gdsio.threads: [16, 32, 64, 128, 256, 512]
+  gdsio.cpu_affinity: ['0', 0-16, 0-32, 0-64, 0-128] 
+loop:
+  - [gdsio.io_size] 
+  - [gdsio.threads] 
+  - [gdsio.cpu_affinity] 
+repeat: 3
+output: "${SHARED_DIR}/output_multi"
