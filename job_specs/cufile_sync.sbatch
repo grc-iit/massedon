@@ -24,3 +24,4 @@ if [ "$JARVIS_FIRST" -eq 0 ]; then
 fi
 echo "On first node!!!"
 jarvis ppl index load jarvis_massedon.delta.test_cufile_sync
+jarvis ppl run
