@@ -16,7 +16,7 @@ config:
       random_seed: 25892892
       unaligned: false
       numa: 0
-      exec_async: true 
+      async: true 
 
     - pkg_type: gdsio
       pkg_name: gdsio2
