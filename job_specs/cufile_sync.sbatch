@@ -10,7 +10,7 @@
 #SBATCH --gpu-bind=closest   # select a cpu close to gpu on pci bus topology
 #SBATCH --account=bekn-delta-gpu    # <- match to a "Project" returned by the "accounts" command
 #SBATCH --no-requeue
-#SBATCH -t 01:30:00
+#SBATCH -t 02:30:00
 #SBATCH -e slurm-%j.err
 #SBATCH -o slurm-%j.out
 
