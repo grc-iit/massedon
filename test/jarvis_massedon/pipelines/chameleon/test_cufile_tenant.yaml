@@ -32,6 +32,7 @@ config:
       random_seed: 25892892
       unaligned: false
       numa: 0
+      async: true 
 vars:
   gdsio1.threads: [1, 1, 16, 16, 32, 32, 64, 64]
   gdsio1.cpu_affinity: ['0', '1', '0-15', '16-31', '0-31', '32-63', '0-63', '64-127']
