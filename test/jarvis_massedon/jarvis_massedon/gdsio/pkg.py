@@ -270,6 +270,7 @@ class Gdsio(Application):
 
         :return: None
         """
+        self.gdsio_exec.wait()
         Kill('.*gdsio.*',
              PsshExecInfo(hostfile=self.jarvis.hostfile,
                           env=self.env))
