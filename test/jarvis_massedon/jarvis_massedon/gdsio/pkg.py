@@ -81,7 +81,7 @@ class Gdsio(Application):
                 'default': 1,
             },
             {
-                'name': 'size',
+                'name': 'file_size',
                 'msg': 'File size (K|M|G)',
                 'type': str,
                 'default': '1G',
@@ -218,7 +218,7 @@ class Gdsio(Application):
             f"-n {self.config['numa']}" if self.config['numa'] is not None else "",
             f"-m {self.config['memtype']}",
             f"-w {self.config['threads']}",
-            f"-s {self.config['size']}",
+            f"-s {self.config['file_size']}",
             f"-o {self.config['offset']}",
             f"-i {self.config['io_size']}",
             "-p" if self.config['nvlinks'] else "",

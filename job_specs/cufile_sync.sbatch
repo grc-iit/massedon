@@ -14,9 +14,7 @@
 #SBATCH -e slurm-%j.err
 #SBATCH -o slurm-%j.out
 
-# spack load ppi-chi-nettest python py-pip
-# module load chi_nettest
-# which jarvis
+# salloc -N 1 -p gpuA40x4 -A bekn-delta-gpu --gpus-per-node=1 --gpu-bind=closest --cpus-per-task=64 --account=bekn-delta-gpu 
 spack load iowarp
 JARVIS_FIRST=$(jarvis sched hostfile build +slurm_host)
 if [ "$JARVIS_FIRST" -eq 0 ]; then
