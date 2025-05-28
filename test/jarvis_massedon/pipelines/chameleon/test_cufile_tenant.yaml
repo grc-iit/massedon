@@ -2,35 +2,46 @@ config:
   name: cufile_sync_test
   env: massedon
   pkgs: 
-    - pkg_type: gdsio1
+    - pkg_type: gdsio
       pkg_name: gdsio1
       do_dbg: false
       dbg_port: 4001
-
       nodes: 1
-      xfer_type: 0  #  [0(GPU_DIRECT), 1(CPU_ONLY), 2(CPU_GPU), 3(CPU_ASYNC_GPU), 4(CPU_CACHED_GPU), 5(GPU_DIRECT_ASYNC), 6(GPU_BATCH), 7(GPU_BATCH_STREAM)]
+      xfer_type: 0
       gpu_index: 0
-      directory: /mnt/nvme1
+      file: /mnt/nvme1/gdsio1
       duration: 30
       io_size: 4k
-      threads: 1
+      threads: 0-64
       io_type: 1  # (0-read, 1-write, 2-randread, 3-randwrite)
       random_seed: 25892892
       unaligned: false
       numa: 0
+      exec_async: true
+      cpu_affinity: 0-64
+
+    - pkg_type: gdsio
+      pkg_name: gdsio2
+      do_dbg: false
+      dbg_port: 4001
+      nodes: 1
+      xfer_type: 0
+      gpu_index: 0
+      file: /mnt/nvme1/gdsio2
+      duration: 30
+      io_size: 16m
+      threads: 128
+      io_type: 1
+      random_seed: 25892892
+      unaligned: false
+      numa: 0
 vars:
-  gdsio.xfer_type: [0, 2, 4]
-  gdsio.io_size: [4K, 16K, 64K, 128K, 1M, 16M, 1G, 16G]
-  gdsio.io_type: [0, 1, 2, 3]
-  gdsio.threads: [1, 2, 4, 8, 16, 32, 64, 128]
-  gdsio.nodes: [1]
-  gdsio.numa: [0, 1]
+  gdsio1.threads: [1, 1, 16, 16, 32, 32, 64, 64]
+  gdsio1.cpu_affinity: ['0', '1', '0-15', '16-31', '0-31', '32-63', '0-63', '64-127']
+  gdsio2.threads: [1, 1, 16, 16, 32, 32, 64, 64]
+  gdsio2.cpu_affinity: ['0', '0', '0-15', '0-15', '0-31', '0-31', '0-63', '0-63']
 loop:
-  - [gdsio.xfer_type]
-  - [gdsio.io_size]
-  - [gdsio.io_type]
-  - [gdsio.threads]
-  - [gdsio.nodes]
-  - [gdsio.numa]
+  - [gdsio1.threads, gdsio2.threads]
+  - [gdsio1.cpu_affinity, gdsio2.cpu_affinity]
 repeat: 1
 output: "${SHARED_DIR}/output_multi"

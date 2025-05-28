@@ -33,6 +33,12 @@ class Gdsio(Application):
                 'default': False,
             },
             {
+                'name': 'cpu_affinity',
+                'msg': 'CPU affinity for threads',
+                'type': str,
+                'default': None,
+            },
+            {
                 'name': 'nodes',
                 'msg': 'The number of nodes to launch on',
                 'type': int,
@@ -233,14 +239,29 @@ class Gdsio(Application):
         ]
         cmd = ' '.join(cmd)
         print(cmd)
-        self.gdsio_exec = Exec(cmd,
-                MpiExecInfo(nprocs=self.config['nodes'],
-                            ppn=1,
-                            env=self.env,
-                            exec_async=self.config['async'],
-                            do_dbg=self.config['do_dbg'],
-                            dbg_port=self.config['dbg_port'],
-                            collect_output=True))
+        if self.config['cpu_affinity'] is not None:
+            self.gdsio_exec = Exec(cmd,
+                    LocalExecInfo(env=self.env,
+                                 exec_async=self.config['async'],
+                                 do_dbg=self.config['do_dbg'],
+                                 dbg_port=self.config['dbg_port'],
+                                 collect_output=True))
+            # Set CPU affinity using taskset after process is launched
+            pid = self.gdsio_exec.exec_.get_pid()
+            if pid:
+                taskset_cmd = f"taskset -pc {self.config['cpu_affinity']} {pid}"
+                Exec(taskset_cmd,
+                     LocalExecInfo(env=self.env,
+                                 collect_output=True))
+        else:
+            self.gdsio_exec = Exec(cmd,
+                    MpiExecInfo(nprocs=self.config['nodes'],
+                                ppn=1,
+                                env=self.env,
+                                exec_async=self.config['async'],
+                                do_dbg=self.config['do_dbg'],
+                                dbg_port=self.config['dbg_port'],
+                                collect_output=True))
 
     def stop(self):
         """
@@ -270,6 +291,9 @@ class Gdsio(Application):
         :return: None
         """
         stat_dict[f'{self.pkg_id}.gbps'] = self.parse_thrpt()
+        min_lat, max_lat = self.parse_latency()
+        stat_dict[f'{self.pkg_id}.min_lat'] = min_lat
+        stat_dict[f'{self.pkg_id}.max_lat'] = max_lat
         stat_dict[f'{self.pkg_id}.start_time'] = self.start_time
 
     def parse_thrpt(self):
@@ -282,3 +306,17 @@ class Gdsio(Application):
                     max_throughput = max(max_throughput, throughput)
         return max_throughput
     
+    def parse_latency(self):
+        avg_min = 0
+        avg_max = 0
+        if self.gdsio_exec is None:
+            return (0, 0) 
+        count = len(self.gdsio_exec.stdout)
+        for host, out in self.gdsio_exec.stdout.items():
+            match = re.search(r'Per Thread Latency\(Min/Max\):\s*([\d.]+)/([\d.]+)', out)
+            if match:
+                min_lat = float(match.group(1))
+                max_lat = float(match.group(2))
+                avg_min += min_lat
+                avg_max += max_lat
+        return (avg_min / count, avg_max / count)
