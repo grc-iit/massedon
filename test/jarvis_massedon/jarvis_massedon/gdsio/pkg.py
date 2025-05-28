@@ -271,6 +271,11 @@ class Gdsio(Application):
         :return: None
         """
         self.gdsio_exec.wait()
+
+    def kill(self):
+        """
+        Kill the application.
+        """
         Kill('.*gdsio.*',
              PsshExecInfo(hostfile=self.jarvis.hostfile,
                           env=self.env))
