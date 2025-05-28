@@ -1,5 +1,5 @@
 config:
-  name: cufile_sync_test
+  name: cufile_batch_small_test
   env: massedon
   pkgs: 
     - pkg_type: gdsio
