@@ -1,0 +1,34 @@
+config:
+  name: cufile_sync_test
+  env: massedon
+  pkgs: 
+    - pkg_type: gdsio
+      pkg_name: gdsio
+      do_dbg: false
+      dbg_port: 4001
+
+      xfer_type: 0  #  [0(GPU_DIRECT), 1(CPU_ONLY), 2(CPU_GPU), 3(CPU_ASYNC_GPU), 4(CPU_CACHED_GPU), 5(GPU_DIRECT_ASYNC), 6(GPU_BATCH), 7(GPU_BATCH_STREAM)]
+      gpu_index: 0
+      directory: /work/nvme/bekn/llogan
+      duration: 10
+      io_size: 4k
+      io_type: 1  # (0-read, 1-write, 2-randread, 3-randwrite)
+      random_seed: 25892892
+      unaligned: false
+      numa: 0
+vars:
+  gdsio.xfer_type: [0, 2]
+  gdsio.io_size: [4K, 16M]
+  gdsio.io_type: [0]
+  gdsio.threads: [1, 128]
+  gdsio.nodes: [1]
+  gdsio.numa: [0]
+loop:
+  - [gdsio.xfer_type]
+  - [gdsio.io_size]
+  - [gdsio.io_type]
+  - [gdsio.threads]
+  - [gdsio.nodes]
+  - [gdsio.numa]
+repeat: 1
+output: "${SHARED_DIR}/output_multi"
