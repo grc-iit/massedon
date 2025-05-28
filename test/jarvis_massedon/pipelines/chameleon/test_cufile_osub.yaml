@@ -17,6 +17,7 @@ config:
       unaligned: false
       numa: 1
       async: true 
+      file_size: 32g
 vars:
   gdsio.io_size: [4k, 1m, 16m]
   gdsio.threads: [16, 32, 64, 128, 256, 512]
