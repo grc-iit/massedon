@@ -15,7 +15,7 @@ config:
       io_type: 1  # (0-read, 1-write, 2-randread, 3-randwrite)
       random_seed: 25892892
       unaligned: false
-      numa: 0
+      numa: 1
       async: true 
 
     - pkg_type: gdsio
@@ -31,7 +31,7 @@ config:
       io_type: 1
       random_seed: 25892892
       unaligned: false
-      numa: 0
+      numa: 1
       async: true 
 vars:
   gdsio1.threads: [1, 1, 16, 16, 32, 32, 64, 64]
