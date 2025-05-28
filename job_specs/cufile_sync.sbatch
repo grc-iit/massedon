@@ -10,7 +10,7 @@
 #SBATCH --gpu-bind=closest   # select a cpu close to gpu on pci bus topology
 #SBATCH --account=bekn-delta-gpu    # <- match to a "Project" returned by the "accounts" command
 #SBATCH --no-requeue
-#SBATCH -t 00:10:00
+#SBATCH -t 01:30:00
 #SBATCH -e slurm-%j.err
 #SBATCH -o slurm-%j.out
 
@@ -23,4 +23,4 @@ if [ "$JARVIS_FIRST" -eq 0 ]; then
     exit 0
 fi
 echo "On first node!!!"
-jarvis ppl index load jarvis_massedon.delta.test_cufile_sync.yaml
+jarvis ppl index load jarvis_massedon.delta.test_cufile_sync
