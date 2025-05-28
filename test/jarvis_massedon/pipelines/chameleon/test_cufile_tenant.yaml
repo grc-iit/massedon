@@ -40,5 +40,5 @@ vars:
   gdsio2.cpu_affinity: ['0', '0', '0-15', '0-15', '0-31', '0-31', '0-63', '0-63']
 loop:
   - [gdsio1.threads, gdsio2.threads, gdsio1.cpu_affinity, gdsio2.cpu_affinity] 
-repeat: 1
+repeat: 3
 output: "${SHARED_DIR}/output_multi"
