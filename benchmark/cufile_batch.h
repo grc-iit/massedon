@@ -174,7 +174,7 @@ class CufileBatchIoEngine : public IoEngine {
                    CUfileOpcode_t op) {
     // prepare batch parameters
     size_t count = io_depth_;
-    
+
     for (size_t i = 0; i < count; ++i) {
       
       io_params_[i].mode                  = CUFILE_BATCH;
@@ -185,7 +185,6 @@ class CufileBatchIoEngine : public IoEngine {
       io_params_[i].u.batch.size          = size;
       io_params_[i].opcode                = op;
 
-      
       std::cout << "Setting up IO parameters for batch " << i << ":" << std::endl;
       std::cout << "  Mode: " << (io_params_[i].mode == CUFILE_BATCH ? "CUFILE_BATCH" : "Unknown") << std::endl;
       std::cout << "  File Handle: " << io_params_[i].fh << std::endl;
